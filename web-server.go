@@ -8,22 +8,16 @@ import (
 	"math/rand"
 	"net/http"
 	"sort"
-
 )
 
 type Joke struct {
-
-
 	Body  string `json:"body"`
 	ID    string `json:"id"`
-	Score int   `json:"score"`
+	Score int    `json:"score"`
 	Title string `json:"title"`
-	
 }
 
-
-	var jokes []Joke
-
+var jokes []Joke
 
 func main() {
 
@@ -44,7 +38,6 @@ func jsonUnmarsh() {
 	}
 
 	sort.SliceStable(jokes, func(i, j int) bool { return jokes[i].Score > jokes[j].Score })
-
 
 }
 
@@ -71,20 +64,13 @@ func getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func getFunniestJoke (w http.ResponseWriter, r *http.Request) {
+func getFunniestJoke(w http.ResponseWriter, r *http.Request) {
 
-	json.NewEncoder(w).Encode(jokes[0:10])
+	json.NewEncoder(w).Encode(jokes[0:9])
 }
 
-
-func getRandomJoke (w http.ResponseWriter, r *http.Request) {
+func getRandomJoke(w http.ResponseWriter, r *http.Request) {
 
 	joke := jokes[rand.Intn(len(jokes))]
 	json.NewEncoder(w).Encode(joke)
 }
-
-
-
-
-
-
