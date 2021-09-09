@@ -1,0 +1,6 @@
+POST http://localhost:9090/jokes/post
+Content-Type: application/json
+
+{}
+
+###
