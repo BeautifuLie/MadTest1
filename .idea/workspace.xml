@@ -25,9 +25,9 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c3c76a16-59f9-4976-8120-61d106b1783f" name="Default Changelist" comment="">
+    <list default="true" id="c3c76a16-59f9-4976-8120-61d106b1783f" name="Default Changelist" comment="Change 10 to 9">
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web-server.go" beforeDir="false" afterPath="$PROJECT_DIR$/web-server.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,12 +54,14 @@
   </component>
   <component name="PropertiesComponent">
     <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="GO_FMT" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
   </component>
   <component name="RunManager" selected="Go Build.go build web-server.go">
     <configuration name="go build MadAppGangTest" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
@@ -92,9 +94,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build web-server.go" />
         <item itemvalue="HTTP Request.All in req" />
         <item itemvalue="Go Build.go build program" />
-        <item itemvalue="Go Build.go build web-server.go" />
         <item itemvalue="Go Build.go build MadAppGangTest" />
       </list>
     </recent_temporary>
@@ -166,6 +168,15 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$/MadTest" />
+    </ignored-roots>
+    <MESSAGE value="Change 10 to 9" />
+    <MESSAGE value="Update pagination" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update pagination" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -179,42 +190,50 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="1064" y="191" key="#Inspections/0.0.1920.1080@0.0.1920.1080" timestamp="1630845546368" />
-    <state width="855" height="245" key="GridCell.Tab.0.bottom" timestamp="1631036458172">
+    <state width="1877" height="320" key="GridCell.Tab.0.bottom" timestamp="1631340810671">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="855" height="245" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1631036458172" />
-    <state width="855" height="245" key="GridCell.Tab.0.center" timestamp="1631036458171">
+    <state width="1877" height="320" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1631340810671" />
+    <state width="1877" height="320" key="GridCell.Tab.0.center" timestamp="1631340810671">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="855" height="245" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1631036458171" />
-    <state width="855" height="245" key="GridCell.Tab.0.left" timestamp="1631036458171">
+    <state width="1877" height="320" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1631340810671" />
+    <state width="1877" height="320" key="GridCell.Tab.0.left" timestamp="1631340810671">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="855" height="245" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1631036458171" />
-    <state width="855" height="245" key="GridCell.Tab.0.right" timestamp="1631036458172">
+    <state width="1877" height="320" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1631340810671" />
+    <state width="1877" height="320" key="GridCell.Tab.0.right" timestamp="1631340810671">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="855" height="245" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1631036458172" />
-    <state width="1877" height="363" key="GridCell.Tab.1.bottom" timestamp="1630955523380">
+    <state width="1877" height="320" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1631340810671" />
+    <state width="951" height="256" key="GridCell.Tab.1.bottom" timestamp="1631340688519">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.1.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1630955523380" />
-    <state width="1877" height="363" key="GridCell.Tab.1.center" timestamp="1630955523379">
+    <state width="951" height="256" key="GridCell.Tab.1.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1631340688519" />
+    <state width="951" height="256" key="GridCell.Tab.1.center" timestamp="1631340688519">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.1.center/0.0.1920.1080@0.0.1920.1080" timestamp="1630955523379" />
-    <state width="1877" height="363" key="GridCell.Tab.1.left" timestamp="1630955523379">
+    <state width="951" height="256" key="GridCell.Tab.1.center/0.0.1920.1080@0.0.1920.1080" timestamp="1631340688519" />
+    <state width="951" height="256" key="GridCell.Tab.1.left" timestamp="1631340688519">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.1.left/0.0.1920.1080@0.0.1920.1080" timestamp="1630955523379" />
-    <state width="1877" height="363" key="GridCell.Tab.1.right" timestamp="1630955523379">
+    <state width="951" height="256" key="GridCell.Tab.1.left/0.0.1920.1080@0.0.1920.1080" timestamp="1631340688519" />
+    <state width="951" height="256" key="GridCell.Tab.1.right" timestamp="1631340688519">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="363" key="GridCell.Tab.1.right/0.0.1920.1080@0.0.1920.1080" timestamp="1630955523379" />
-    <state x="552" y="272" key="Vcs.Push.Dialog.v2" timestamp="1631203785290">
+    <state width="951" height="256" key="GridCell.Tab.1.right/0.0.1920.1080@0.0.1920.1080" timestamp="1631340688519" />
+    <state x="911" y="184" key="SettingsEditor" timestamp="1631292814518">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="552" y="272" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1631203785290" />
+    <state x="911" y="184" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1631292814518" />
+    <state x="552" y="272" key="Vcs.Push.Dialog.v2" timestamp="1631204142240">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="552" y="272" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1631204142240" />
+    <state x="769" y="453" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1631340881081">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="769" y="453" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1080@0.0.1920.1080" timestamp="1631340881081" />
     <state x="992" y="241" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1630842242714">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
