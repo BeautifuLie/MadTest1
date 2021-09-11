@@ -7,14 +7,16 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"sort"
+	"strconv"
 )
 
 type Joke struct {
-	Body  string `json:"body"`
-	ID    string `json:"id"`
-	Score int    `json:"score"`
 	Title string `json:"title"`
+	Body  string `json:"body"`
+	Score int    `json:"score"`
+	ID    string `json:"id"`
 }
 
 var jokes []Joke
@@ -37,7 +39,9 @@ func jsonUnmarsh() {
 		fmt.Println("Error umarshalling JSON", err)
 	}
 
-	sort.SliceStable(jokes, func(i, j int) bool { return jokes[i].Score > jokes[j].Score })
+	sort.SliceStable(jokes, func(i, j int) bool {
+		return jokes[i].Score > jokes[j].Score
+	})
 
 }
 
@@ -57,7 +61,9 @@ func getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 	for _, v := range jokes {
 		if id == v.ID {
-			json.NewEncoder(w).Encode(v)
+			json.NewEncoder(w).Encode(v.Title)
+			json.NewEncoder(w).Encode(v.Body)
+			json.NewEncoder(w).Encode(v.ID)
 			break
 		}
 	}
@@ -66,11 +72,24 @@ func getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 func getFunniestJoke(w http.ResponseWriter, r *http.Request) {
 
-	json.NewEncoder(w).Encode(jokes[0:9])
+	m, _ := url.ParseQuery(r.URL.RawQuery)
+	var v = m["limit"][0]
+	a, _ := strconv.Atoi(v)
+
+	json.NewEncoder(w).Encode(jokes[:a])
+
 }
 
 func getRandomJoke(w http.ResponseWriter, r *http.Request) {
 
-	joke := jokes[rand.Intn(len(jokes))]
-	json.NewEncoder(w).Encode(joke)
+	for i, _ := range jokes {
+		if i < rand.Intn(15)+1 {
+			j := jokes[rand.Intn(len(jokes))]
+			json.NewEncoder(w).Encode(j.Title)
+			json.NewEncoder(w).Encode(j.Body)
+			json.NewEncoder(w).Encode("******")
+		}
+
+	}
+
 }
