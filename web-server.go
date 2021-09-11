@@ -36,7 +36,7 @@ func jsonUnmarsh() {
 
 	err = json.Unmarshal(j, &jokes)
 	if err != nil {
-		fmt.Println("Error umarshalling JSON", err)
+		fmt.Println("Error unmarshalling JSON", err)
 	}
 
 	sort.SliceStable(jokes, func(i, j int) bool {
@@ -49,9 +49,14 @@ func handleRequest() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/jokes/funniest", getFunniestJoke)
 	myRouter.HandleFunc("/jokes/random", getRandomJoke)
+	myRouter.HandleFunc("/jokes/post", addJoke).Methods("POST")
 	myRouter.HandleFunc("/jokes/{id}", getJokeByID)
 
-	http.ListenAndServe(":9090", myRouter)
+	err := http.ListenAndServe(":9090", myRouter)
+	if err != nil {
+		println(http.StatusBadRequest)
+	}
+
 }
 
 func getJokeByID(w http.ResponseWriter, r *http.Request) {
@@ -92,4 +97,22 @@ func getRandomJoke(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+}
+
+func addJoke(w http.ResponseWriter, r *http.Request) {
+
+	var newJoke = &Joke{
+		Title: "dwfawf",
+		Body:  "fawfwff",
+		Score: 24,
+		ID:    "242f2",
+	}
+
+	jokes = append(jokes, *newJoke)
+	jokeBytes, err := json.Marshal(jokes)
+	if err != nil {
+		fmt.Println("Error marshalling JSON", err)
+	}
+	err = ioutil.WriteFile("reddit_jokes.json", jokeBytes, 0644)
+	json.NewEncoder(w).Encode(newJoke)
 }
