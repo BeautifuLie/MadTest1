@@ -88,7 +88,7 @@ func handleRequest(s *Server) *mux.Router {
 //	}
 //}
 
-func (s Server) getJokeByID(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -96,7 +96,7 @@ func (s Server) getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s Server) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	count := 0
 	const defaultLimit = 10
 	m, _ := url.ParseQuery(r.URL.RawQuery)
@@ -111,7 +111,7 @@ func (s Server) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s Server) getRandomJoke(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getRandomJoke(w http.ResponseWriter, r *http.Request) {
 	count := 0
 	const defaultLimit = 10
 	m, _ := url.ParseQuery(r.URL.RawQuery)
@@ -142,7 +142,7 @@ func (s Server) getRandomJoke(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s Server) addJoke(w http.ResponseWriter, r *http.Request) {
+func (s *Server) addJoke(w http.ResponseWriter, r *http.Request) {
 
 	var j Joke
 	err := json.NewDecoder(r.Body).Decode(&j)
@@ -160,7 +160,7 @@ func (s Server) addJoke(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(j)
 }
 
-func (s Server) getJokeByText(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getJokeByText(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	text := vars["text"]
 	count := 0

@@ -25,12 +25,8 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c3c76a16-59f9-4976-8120-61d106b1783f" name="Default Changelist" comment="upd">
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-requests-log.http" beforeDir="false" />
+    <list default="true" id="c3c76a16-59f9-4976-8120-61d106b1783f" name="Default Changelist" comment="Test was implemented">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reddit_jokes.json" beforeDir="false" afterPath="$PROJECT_DIR$/reddit_jokes.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web-server.go" beforeDir="false" afterPath="$PROJECT_DIR$/web-server.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -69,7 +65,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
   </component>
-  <component name="RunManager" selected="Go Build.go build main.go">
+  <component name="RunManager" selected="Go Build.go build web-server.go">
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="MadAppGangTest" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -119,8 +115,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestGetFunniest in program" />
         <item itemvalue="Go Build.go build web-server.go" />
+        <item itemvalue="Go Test.TestGetFunniest in program" />
         <item itemvalue="Go Build.go build program" />
         <item itemvalue="HTTP Request.All in req" />
         <item itemvalue="Go Build.go build main.go" />
@@ -204,7 +200,8 @@
     <MESSAGE value="Update pagination" />
     <MESSAGE value="Pagination" />
     <MESSAGE value="upd" />
-    <option name="LAST_COMMIT_MESSAGE" value="upd" />
+    <MESSAGE value="Test was implemented" />
+    <option name="LAST_COMMIT_MESSAGE" value="Test was implemented" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -226,30 +223,30 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="1127" y="166" key="#go_build_main.go/0.0.1920.1080@0.0.1920.1080" timestamp="1631447634744" />
-    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog" timestamp="1631351132017">
+    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog" timestamp="1631730936742">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1631351132017" />
+    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1631730936742" />
     <state x="1197" y="294" key="FileChooserDialogImpl" timestamp="1631447409028">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="1197" y="294" key="FileChooserDialogImpl/0.0.1920.1080@0.0.1920.1080" timestamp="1631447409028" />
-    <state width="965" height="316" key="GridCell.Tab.0.bottom" timestamp="1631729687069">
+    <state width="1877" height="2" key="GridCell.Tab.0.bottom" timestamp="1631730933876">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="965" height="316" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1631729687069" />
-    <state width="965" height="316" key="GridCell.Tab.0.center" timestamp="1631729687069">
+    <state width="1877" height="2" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1631730933876" />
+    <state width="1877" height="2" key="GridCell.Tab.0.center" timestamp="1631730933876">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="965" height="316" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1631729687069" />
-    <state width="965" height="316" key="GridCell.Tab.0.left" timestamp="1631729687069">
+    <state width="1877" height="2" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1631730933876" />
+    <state width="1877" height="2" key="GridCell.Tab.0.left" timestamp="1631730933876">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="965" height="316" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1631729687069" />
-    <state width="965" height="316" key="GridCell.Tab.0.right" timestamp="1631729687069">
+    <state width="1877" height="2" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1631730933876" />
+    <state width="1877" height="2" key="GridCell.Tab.0.right" timestamp="1631730933876">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="965" height="316" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1631729687069" />
+    <state width="1877" height="2" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1631730933876" />
     <state width="970" height="197" key="GridCell.Tab.1.bottom" timestamp="1631637976272">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
@@ -270,10 +267,10 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="911" y="184" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1631292814518" />
-    <state x="552" y="272" key="Vcs.Push.Dialog.v2" timestamp="1631373916010">
+    <state x="552" y="272" key="Vcs.Push.Dialog.v2" timestamp="1631730995669">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="552" y="272" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1631373916010" />
+    <state x="552" y="272" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1631730995669" />
     <state x="769" y="453" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1631373830290">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
