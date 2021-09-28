@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -27,14 +28,16 @@ type Server struct {
 }
 
 func main() {
+
 	s := Server{
 		jokes:    []Joke{},
 		jokesMap: map[string]Joke{},
 	}
-	jsonUnmarsh(&s)
-	myRouter := handleRequest(&s)
 
-	err := http.ListenAndServe(":9090", myRouter)
+	jsonUnmarsh(&s)
+	myRouter1 := handleRequest(&s)
+
+	err := http.ListenAndServe(":9090", myRouter1)
 	if err != nil {
 		panic(err)
 	}
@@ -58,6 +61,7 @@ func jsonUnmarsh(s *Server) {
 
 	for _, j := range s.jokes {
 		s.jokesMap[j.ID] = j
+
 	}
 
 }
@@ -92,7 +96,19 @@ func (s *Server) getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
-	json.NewEncoder(w).Encode(s.jokesMap[id])
+	count := 0
+
+	for _, v := range s.jokesMap {
+
+		if strings.Contains(v.ID, id) {
+			json.NewEncoder(w).Encode(s.jokesMap[id])
+			count++
+		}
+
+	}
+	if count == 0 {
+		http.Error(w, "Error: No jokes found", http.StatusNotFound)
+	}
 
 }
 
@@ -104,7 +120,7 @@ func (s *Server) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	if len(m["limit"]) == 0 {
 		count = defaultLimit
 	} else {
-		v = m["limit"][0]
+		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
 		count, _ = strconv.Atoi(v)
 	}
 	json.NewEncoder(w).Encode(s.jokes[:count])
@@ -114,8 +130,11 @@ func (s *Server) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getRandomJoke(w http.ResponseWriter, r *http.Request) {
 	count := 0
 	const defaultLimit = 10
-	m, _ := url.ParseQuery(r.URL.RawQuery)
-	v := ""
+	m, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		log.Fatal(err, "Error parsing query")
+	}
+	var v string
 	if len(m["limit"]) == 0 {
 		count = defaultLimit
 	} else {
