@@ -9,10 +9,16 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
 )
+
+type JokeSource interface {
+	//LoadJokes() map[string]Joke
+	SaveJokes(jokes map[string]Joke)
+}
 
 type Joke struct {
 	Title string `json:"title"`
@@ -27,6 +33,8 @@ type Server struct {
 	jokesMap map[string]Joke
 }
 
+var a JokeSource
+
 func main() {
 
 	s := Server{
@@ -34,10 +42,12 @@ func main() {
 		jokesMap: map[string]Joke{},
 	}
 
-	jsonUnmarsh(&s)
-	myRouter1 := handleRequest(&s)
+	a = &s
 
-	err := http.ListenAndServe(":9090", myRouter1)
+	jsonUnmarsh(&s)
+	MyRouter1 := handleRequest(&s)
+
+	err := http.ListenAndServe(":9090", MyRouter1)
 	if err != nil {
 		panic(err)
 	}
@@ -45,6 +55,7 @@ func main() {
 }
 
 func jsonUnmarsh(s *Server) {
+
 	j, err := ioutil.ReadFile("reddit_jokes.json")
 	if err != nil {
 		fmt.Println("Error reading file", err)
@@ -69,6 +80,7 @@ func jsonUnmarsh(s *Server) {
 func handleRequest(s *Server) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	//myRouter.HandleFunc("/jokes", homePage).Methods("GET")
+	myRouter.HandleFunc("/jokes/method/save", s.Save)
 	myRouter.HandleFunc("/jokes/funniest", s.getFunniestJokes)
 	myRouter.HandleFunc("/jokes/random", s.getRandomJoke)
 	myRouter.HandleFunc("/jokes", s.addJoke).Methods("POST")
@@ -77,20 +89,6 @@ func handleRequest(s *Server) *mux.Router {
 
 	return myRouter
 }
-
-//func homePage(w http.ResponseWriter, r *http.Request){
-//	tmpl, err := template.ParseFiles("home_page.html")
-//	if err != nil {
-//		http.Error(w, err.Error(), 400)
-//		return
-//	}
-//
-//	err = tmpl.Execute(w, nil)
-//	if err != nil {
-//		http.Error(w, err.Error(), 400)
-//		return
-//	}
-//}
 
 func (s *Server) getJokeByID(w http.ResponseWriter, r *http.Request) {
 
@@ -108,6 +106,7 @@ func (s *Server) getJokeByID(w http.ResponseWriter, r *http.Request) {
 	}
 	if count == 0 {
 		http.Error(w, "Error: No jokes found", http.StatusNotFound)
+
 	}
 
 }
@@ -162,7 +161,8 @@ func (s *Server) getRandomJoke(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) addJoke(w http.ResponseWriter, r *http.Request) {
-
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
 	var j Joke
 	err := json.NewDecoder(r.Body).Decode(&j)
 	if err != nil {
@@ -176,16 +176,21 @@ func (s *Server) addJoke(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error marshalling JSON", err)
 	}
 	err = ioutil.WriteFile("reddit_jokes.json", jokeBytes, 0644)
-	json.NewEncoder(w).Encode(j)
+	if err != nil {
+		http.Error(w, "Error creating new Joke", http.StatusBadRequest)
+	}
+
+	json.NewEncoder(w).Encode(&j)
 }
 
 func (s *Server) getJokeByText(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 	text := vars["text"]
 	count := 0
 
 	for _, v := range s.jokes {
-
+		fmt.Sprint(count)
 		if strings.Contains(v.Title, text) || strings.Contains(v.Body, text) {
 			json.NewEncoder(w).Encode(v)
 
@@ -193,7 +198,30 @@ func (s *Server) getJokeByText(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if count == 0 {
-		json.NewEncoder(w).Encode("No matches")
+		http.Error(w, "Error: No matches", http.StatusNotFound)
+
 	}
+
+}
+
+func (s *Server) SaveJokes(map[string]Joke) {
+
+	file, err := os.Create("test.txt")
+	if err != nil {
+		log.Fatalf("failed creating file: %s", err)
+	}
+	file.Close()
+
+	jokeBytes, err := json.MarshalIndent(s.jokes, "", " ")
+	if err != nil {
+		fmt.Println("Error marshalling JSON", err)
+	}
+	err = ioutil.WriteFile("test.txt", jokeBytes, 0644)
+
+}
+
+func (s *Server) Save(w http.ResponseWriter, r *http.Request) {
+	a.SaveJokes(s.jokesMap)
+	json.NewEncoder(w).Encode("File saved")
 
 }
