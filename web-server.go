@@ -45,9 +45,9 @@ func main() {
 	a = &s
 
 	jsonUnmarsh(&s)
-	MyRouter1 := handleRequest(&s)
+	myRouter := handleRequest(&s)
 
-	err := http.ListenAndServe(":9090", MyRouter1)
+	err := http.ListenAndServe(":9090", myRouter)
 	if err != nil {
 		panic(err)
 	}
