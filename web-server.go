@@ -9,16 +9,17 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
 )
 
 type JokeSource interface {
-	//LoadJokes() map[string]Joke
-	SaveJokes(jokes map[string]Joke)
+	LoadJokes() ([]Joke, map[string]Joke)
+	SaveJokes([]Joke, map[string]Joke)
 }
+
+var a JokeSource
 
 type Joke struct {
 	Title string `json:"title"`
@@ -28,23 +29,19 @@ type Joke struct {
 }
 
 type Server struct {
-	jokes []Joke
-
-	jokesMap map[string]Joke
+	jokesStruct []Joke
+	jokesMap    map[string]Joke
 }
-
-var a JokeSource
 
 func main() {
 
 	s := Server{
-		jokes:    []Joke{},
-		jokesMap: map[string]Joke{},
+		[]Joke{},
+		map[string]Joke{},
 	}
 
 	a = &s
-
-	jsonUnmarsh(&s)
+	//jsonUnmarsh(&s)
 	myRouter := handleRequest(&s)
 
 	err := http.ListenAndServe(":9090", myRouter)
@@ -54,33 +51,81 @@ func main() {
 
 }
 
-func jsonUnmarsh(s *Server) {
+//func jsonUnmarsh(s *Server) {
+//
+//	j, err := ioutil.ReadFile("reddit_jokes.json")
+//	if err != nil {
+//		fmt.Println("Error reading file", err)
+//	}
+//
+//	err = json.Unmarshal(j, &s.jokesStruct)
+//	if err != nil {
+//		fmt.Println("Error unmarshalling JSON", err)
+//	}
+//
+//	sort.SliceStable(s.jokesStruct, func(i, j int) bool {
+//		return s.jokesStruct[i].Score > s.jokesStruct[j].Score
+//	})
+//
+//	for _, j := range s.jokesStruct {
+//		s.jokesMap[j.ID] = j
+//
+//	}
+//
+//}
 
+func (s *Server) LoadJokes() ([]Joke, map[string]Joke) {
 	j, err := ioutil.ReadFile("reddit_jokes.json")
 	if err != nil {
 		fmt.Println("Error reading file", err)
 	}
 
-	err = json.Unmarshal(j, &s.jokes)
+	err = json.Unmarshal(j, &s.jokesStruct)
 	if err != nil {
 		fmt.Println("Error unmarshalling JSON", err)
 	}
 
-	sort.SliceStable(s.jokes, func(i, j int) bool {
-		return s.jokes[i].Score > s.jokes[j].Score
-	})
-
-	for _, j := range s.jokes {
+	for _, j := range s.jokesStruct {
 		s.jokesMap[j.ID] = j
-
 	}
+	return s.jokesStruct, s.jokesMap
+}
+func (s *Server) Load(w http.ResponseWriter, r *http.Request) {
+	a.LoadJokes()
+	json.NewEncoder(w).Encode("File loaded")
+}
 
+func (s *Server) SaveJokes([]Joke, map[string]Joke) {
+
+	structBytes, err := json.MarshalIndent(s.jokesStruct, "", " ")
+	if err != nil {
+		fmt.Println("Error marshalling JSON", err)
+	}
+	err = ioutil.WriteFile("jokesStruct.json", structBytes, 0644)
+
+	mapBytes, err := json.MarshalIndent(s.jokesMap, "", " ")
+	if err != nil {
+		fmt.Println("Error marshalling JSON", err)
+	}
+	err = ioutil.WriteFile("jokesMap.json", mapBytes, 0644)
+}
+func (s *Server) Save(w http.ResponseWriter, r *http.Request) {
+	a.SaveJokes(s.jokesStruct, s.jokesMap)
+	if a.SaveJokes != nil {
+		err := json.NewEncoder(w).Encode("File saved")
+		if err != nil {
+			fmt.Println("Error saving file", err)
+		}
+	} else {
+		json.NewEncoder(w).Encode("Error saving file")
+	}
 }
 
 func handleRequest(s *Server) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	//myRouter.HandleFunc("/jokes", homePage).Methods("GET")
 	myRouter.HandleFunc("/jokes/method/save", s.Save)
+	myRouter.HandleFunc("/jokes/method/load", s.Load)
 	myRouter.HandleFunc("/jokes/funniest", s.getFunniestJokes)
 	myRouter.HandleFunc("/jokes/random", s.getRandomJoke)
 	myRouter.HandleFunc("/jokes", s.addJoke).Methods("POST")
@@ -102,16 +147,19 @@ func (s *Server) getJokeByID(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(s.jokesMap[id])
 			count++
 		}
-
 	}
 	if count == 0 {
 		http.Error(w, "Error: No jokes found", http.StatusNotFound)
-
 	}
 
 }
 
 func (s *Server) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
+
+	sort.SliceStable(s.jokesStruct, func(i, j int) bool {
+		return s.jokesStruct[i].Score > s.jokesStruct[j].Score
+	})
+
 	count := 0
 	const defaultLimit = 10
 	m, _ := url.ParseQuery(r.URL.RawQuery)
@@ -122,7 +170,7 @@ func (s *Server) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
 		count, _ = strconv.Atoi(v)
 	}
-	json.NewEncoder(w).Encode(s.jokes[:count])
+	json.NewEncoder(w).Encode(s.jokesStruct[:count])
 
 }
 
@@ -136,6 +184,7 @@ func (s *Server) getRandomJoke(w http.ResponseWriter, r *http.Request) {
 	var v string
 	if len(m["limit"]) == 0 {
 		count = defaultLimit
+
 	} else {
 		v = m["limit"][0]
 	}
@@ -149,9 +198,9 @@ func (s *Server) getRandomJoke(w http.ResponseWriter, r *http.Request) {
 	} else {
 		count = defaultLimit
 	}
-	for i := range s.jokes {
+	for i := range s.jokesStruct {
 		if i < count {
-			j := s.jokes[rand.Intn(len(s.jokes))]
+			j := s.jokesStruct[rand.Intn(len(s.jokesStruct))]
 			json.NewEncoder(w).Encode(j)
 
 		}
@@ -169,9 +218,9 @@ func (s *Server) addJoke(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	s.jokes = append(s.jokes, j)
+	s.jokesStruct = append(s.jokesStruct, j)
 	s.jokesMap[j.ID] = j
-	jokeBytes, err := json.Marshal(s.jokes)
+	jokeBytes, err := json.Marshal(s.jokesStruct)
 	if err != nil {
 		fmt.Println("Error marshalling JSON", err)
 	}
@@ -189,7 +238,7 @@ func (s *Server) getJokeByText(w http.ResponseWriter, r *http.Request) {
 	text := vars["text"]
 	count := 0
 
-	for _, v := range s.jokes {
+	for _, v := range s.jokesStruct {
 		fmt.Sprint(count)
 		if strings.Contains(v.Title, text) || strings.Contains(v.Body, text) {
 			json.NewEncoder(w).Encode(v)
@@ -201,27 +250,5 @@ func (s *Server) getJokeByText(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error: No matches", http.StatusNotFound)
 
 	}
-
-}
-
-func (s *Server) SaveJokes(map[string]Joke) {
-
-	file, err := os.Create("test.txt")
-	if err != nil {
-		log.Fatalf("failed creating file: %s", err)
-	}
-	file.Close()
-
-	jokeBytes, err := json.MarshalIndent(s.jokes, "", " ")
-	if err != nil {
-		fmt.Println("Error marshalling JSON", err)
-	}
-	err = ioutil.WriteFile("test.txt", jokeBytes, 0644)
-
-}
-
-func (s *Server) Save(w http.ResponseWriter, r *http.Request) {
-	a.SaveJokes(s.jokesMap)
-	json.NewEncoder(w).Encode("File saved")
 
 }
