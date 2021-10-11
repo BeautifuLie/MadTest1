@@ -130,15 +130,15 @@ func Random(m url.Values, s *Server) (Joke, error) {
 
 func Add(j Joke, s *Server) (Joke, error) {
 	s.JokesStruct = append(s.JokesStruct, j)
-	s.JokesMap[j.ID] = j
-	jokeBytes, err := json.Marshal(s.JokesMap)
+
+	jokeBytes, err := json.Marshal(s.JokesStruct)
 	if err != nil {
 		errors.New("error marshalling")
 	}
-	err1 := errors.New("no jokes with that ID")
+
 	err2 := ioutil.WriteFile("reddit_jokes.json", jokeBytes, 0644)
 	if err2 != nil {
-		return j, err1
+		return j, err2
 	}
-	return j, err
+	return j, err2
 }
