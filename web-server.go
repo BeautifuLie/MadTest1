@@ -12,7 +12,8 @@ import (
 
 func main() {
 
-	storage.St = &storage.S
+	storage.St = &storage.F
+
 	myRouter := handleRequest(&storage.Server{})
 
 	err := http.ListenAndServe(":9090", myRouter)
@@ -45,7 +46,6 @@ func getJokeByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-
 	json.NewEncoder(w).Encode(res)
 }
 
@@ -69,9 +69,9 @@ func getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err1 := storage.Funniest(m, &storage.S)
-	if err1 != nil {
-		http.Error(w, err1.Error(), http.StatusBadRequest)
+	res, err := storage.Funniest(m, &storage.S)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -86,9 +86,9 @@ func getRandomJoke(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err, "Error parsing query")
 	}
 
-	res, err1 := storage.Random(m, &storage.S)
-	if err1 != nil {
-		http.Error(w, err1.Error(), http.StatusBadRequest)
+	res, err := storage.Random(m, &storage.S)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -144,7 +144,7 @@ func Save(w http.ResponseWriter, r *http.Request) {
 
 	err := storage.St.Save(storage.S.JokesStruct)
 	if err != nil {
-		http.Error(w, "oops", 400)
+		http.Error(w, "error saving file", 500)
 	}
 	json.NewEncoder(w).Encode("File saved")
 

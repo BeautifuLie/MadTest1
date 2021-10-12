@@ -13,6 +13,23 @@ import (
 	"testing"
 )
 
+//func (fs *MockStorage) Save ([]storage.Joke) error{
+//	ctrl := gomock.NewController(t)
+//	return nil
+//}
+//
+//func (fs *MockStorage) Load () ([]storage.Joke,error) {
+//	return []storage.Joke{
+//		{
+//			Title: "test1",
+//			Body:  "test2",
+//			Score: 3,
+//			ID:    "abc",
+//		},
+//
+//	}, nil
+//}
+
 func TestGetFunniest(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
@@ -20,11 +37,12 @@ func TestGetFunniest(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	s := storage.Server{
-		Storage:     storage.St,
+		//Storage:     MockStorage{},
 		JokesStruct: []storage.Joke{},
 		JokesMap:    map[string]storage.Joke{},
 	}
-	storage.St = &storage.S
+
+	storage.St = &storage.F
 	_, err := storage.St.Load()
 	require.NoError(t, err)
 
@@ -57,7 +75,7 @@ func TestFindById(t *testing.T) {
 		JokesStruct: []storage.Joke{},
 		JokesMap:    map[string]storage.Joke{},
 	}
-	storage.St = &storage.S
+	storage.St = &storage.F
 	_, err := storage.St.Load()
 	require.NoError(t, err)
 	handleRequest(&s)
@@ -87,7 +105,7 @@ func TestFindByText(t *testing.T) {
 		JokesStruct: []storage.Joke{},
 		JokesMap:    map[string]storage.Joke{},
 	}
-	storage.St = &storage.S
+	storage.St = &storage.F
 	_, err := storage.St.Load()
 	require.NoError(t, err)
 
@@ -120,7 +138,7 @@ func TestAddJoke(t *testing.T) {
 		JokesStruct: []storage.Joke{},
 		JokesMap:    map[string]storage.Joke{},
 	}
-	storage.St = &storage.S
+	storage.St = &storage.F
 	_, err := storage.St.Load()
 	require.NoError(t, err)
 	handleRequest(&s)
@@ -149,7 +167,7 @@ func TestRandom(t *testing.T) {
 		JokesStruct: []storage.Joke{},
 		JokesMap:    map[string]storage.Joke{},
 	}
-	storage.St = &storage.S
+	storage.St = &storage.F
 	_, err := storage.St.Load()
 	require.NoError(t, err)
 	handleRequest(&s)
@@ -166,7 +184,7 @@ func TestRandom(t *testing.T) {
 		JokesStruct: []storage.Joke{},
 		JokesMap:    map[string]storage.Joke{},
 	}
-	storage.St = &storage.S
+	storage.St = &storage.F
 	_, err = storage.St.Load()
 	require.NoError(t, err)
 	handleRequest(&s1)
