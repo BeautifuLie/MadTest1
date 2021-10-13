@@ -23,6 +23,9 @@ var S = Server{
 	JokesMap:    map[string]model.Joke{},
 }
 
+//ErrNoMatches
+var ErrNoMatches = errors.New(" No matches")
+
 func ID(id string, s *Server) (model.Joke, error) {
 	for _, j := range S.JokesStruct {
 		S.JokesMap[j.ID] = j
@@ -36,9 +39,6 @@ func ID(id string, s *Server) (model.Joke, error) {
 	}
 	return model.Joke{}, err
 }
-
-//ErrNoMatches
-var ErrNoMatches = errors.New(" No matches")
 
 func Text(text string, s *Server) ([]model.Joke, error) {
 
@@ -86,8 +86,8 @@ func Funniest(m url.Values, s *Server) ([]model.Joke, error) {
 	return []model.Joke{}, err
 }
 
-func Random(m url.Values, s *Server) (model.Joke, error) {
-
+func Random(m url.Values, s *Server) ([]model.Joke, error) {
+	var result []model.Joke
 	count := 0
 	const defaultLimit = 10
 	var v string
@@ -110,13 +110,16 @@ func Random(m url.Values, s *Server) (model.Joke, error) {
 
 		if i < count {
 
-			return S.JokesStruct[rand.Intn(len(s.JokesStruct))], nil
+			a := S.JokesStruct[rand.Intn(len(s.JokesStruct))]
+			result = append(result, a)
 
 		}
 
 	}
-	err = errors.New(" Some error")
-	return model.Joke{}, err
+	if result != nil {
+		return result, nil
+	}
+	return nil, err
 }
 
 func Add(j model.Joke, s *Server) (model.Joke, error) {
