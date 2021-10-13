@@ -7,14 +7,20 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"program/joker"
+	"program/model"
 	"program/storage"
+	"program/storage/filestorage"
 )
 
 func main() {
 
-	storage.St = &storage.F
+	storage.St = &filestorage.FileStorage{}
 
-	myRouter := handleRequest(&storage.Server{})
+	//file:= filestorage.NewFileStorage("reddit_jokes.json")
+	//fmt.Println(file)
+
+	myRouter := handleRequest(&joker.Server{})
 
 	err := http.ListenAndServe(":9090", myRouter)
 	if err != nil {
@@ -23,7 +29,7 @@ func main() {
 
 }
 
-func handleRequest(s *storage.Server) *mux.Router {
+func handleRequest(s *joker.Server) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	//myRouter.HandleFunc("/jokes", homePage).Methods("GET")
 	myRouter.HandleFunc("/jokes/method/save", Save)
@@ -41,7 +47,7 @@ func getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
-	res, err := storage.ID(id, &storage.S)
+	res, err := joker.ID(id, &joker.S)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -53,13 +59,13 @@ func getJokeByText(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 	text := vars["text"]
-	res, err := storage.Text(text, &storage.S)
+	res, err := joker.Text(text, &joker.S)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(&res)
 
 }
 
@@ -69,7 +75,7 @@ func getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err := storage.Funniest(m, &storage.S)
+	res, err := joker.Funniest(m, &joker.S)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -86,7 +92,7 @@ func getRandomJoke(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err, "Error parsing query")
 	}
 
-	res, err := storage.Random(m, &storage.S)
+	res, err := joker.Random(m, &joker.S)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -102,23 +108,23 @@ func addJoke(w http.ResponseWriter, r *http.Request) {
 		Description string
 	}
 
-	var j storage.Joke
+	var j model.Joke
 	err := json.NewDecoder(io.LimitReader(r.Body, 4*1024)).Decode(&j)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = storage.Joke.Validate(j)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(serverError{
-			Code:        "validation_err",
-			Description: err.Error(),
-		})
-		return
-	}
-	res, err1 := storage.Add(j, &storage.S)
+	//err = model.Joke.Validate(j)
+	//if err != nil {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	json.NewEncoder(w).Encode(serverError{
+	//		Code:        "validation_err",
+	//		Description: err.Error(),
+	//	})
+	//	return
+	//}
+	res, err1 := joker.Add(j, &joker.S)
 	if err1 != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -133,7 +139,7 @@ func Load(w http.ResponseWriter, r *http.Request) {
 
 	_, err := storage.St.Load()
 	if err != nil {
-		http.Error(w, "Error loading file", 402)
+		http.Error(w, "error", 404)
 	} else {
 		json.NewEncoder(w).Encode("File loaded")
 	}
@@ -142,7 +148,7 @@ func Load(w http.ResponseWriter, r *http.Request) {
 
 func Save(w http.ResponseWriter, r *http.Request) {
 
-	err := storage.St.Save(storage.S.JokesStruct)
+	err := storage.St.Save(joker.S.JokesStruct)
 	if err != nil {
 		http.Error(w, "error saving file", 500)
 	}

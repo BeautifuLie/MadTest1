@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	storage "program/storage"
+	"program/storage"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
