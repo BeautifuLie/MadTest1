@@ -2,11 +2,9 @@ package filestorage
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"program/joker"
 	"program/model"
 )
 
@@ -36,27 +34,25 @@ func (fs *FileStorage) Load() ([]model.Joke, error) {
 
 	defer file.Close()
 
-	err = json.NewDecoder(file).Decode(&joker.S.JokesStruct)
+	var result []model.Joke
+
+	err = json.NewDecoder(file).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, j := range joker.S.JokesStruct {
-		joker.S.JokesMap[j.ID] = j
-	}
-
-	return joker.S.JokesStruct, nil
+	return result, nil
 
 }
 
-func (fs *FileStorage) Save([]model.Joke) error {
-	structBytes, err := json.MarshalIndent(joker.S.JokesStruct, "", " ")
+func (fs *FileStorage) Save(jokes []model.Joke) error {
+	structBytes, err := json.MarshalIndent(jokes, "", " ")
 	if err != nil {
-		errors.New(" Error marshalling JSON")
+		fmt.Errorf(" error marshalling JSON:%w:", err)
 	}
-	err = ioutil.WriteFile("reddit_jokes.json", structBytes, 0644)
+	err = ioutil.WriteFile("reddit_jokes2.json", structBytes, 0644)
 	if err != nil {
-		return errors.New(" Error saving file")
+		return fmt.Errorf(" error saving file:%w", err)
 	}
 
 	return nil

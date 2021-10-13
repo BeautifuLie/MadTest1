@@ -23,24 +23,10 @@ var S = Server{
 	JokesMap:    map[string]model.Joke{},
 }
 
-//func (j Joke) Validate() error {
-//	if strings.TrimSpace(j.Body) == "" {
-//		return errors.New("joke Body is empty")
-//	}
-//	if strings.TrimSpace(j.ID) == "" {
-//		return errors.New("ID is empty")
-//	}
-//	if strings.TrimSpace(j.Title) == "" {
-//		return errors.New(" Title is empty")
-//	}
-//	if j.Score < 0 {
-//		return errors.New(" Score is less than 0")
-//	}
-//	return nil
-//}
-
 func ID(id string, s *Server) (model.Joke, error) {
-
+	for _, j := range S.JokesStruct {
+		S.JokesMap[j.ID] = j
+	}
 	err := errors.New("no jokes with that ID")
 	for _, v := range s.JokesMap {
 
@@ -55,6 +41,7 @@ func ID(id string, s *Server) (model.Joke, error) {
 var ErrNoMatches = errors.New(" No matches")
 
 func Text(text string, s *Server) ([]model.Joke, error) {
+
 	var result []model.Joke
 
 	for _, v := range s.JokesStruct {
@@ -69,6 +56,7 @@ func Text(text string, s *Server) ([]model.Joke, error) {
 }
 
 func Funniest(m url.Values, s *Server) ([]model.Joke, error) {
+
 	err := errors.New(" Bad request")
 
 	sort.SliceStable(s.JokesStruct, func(i, j int) bool {
@@ -151,3 +139,7 @@ func Add(j model.Joke, s *Server) (model.Joke, error) {
 
 	return j, err
 }
+
+//type Joke struct{
+//	*model.Joke
+//}
