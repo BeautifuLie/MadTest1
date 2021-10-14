@@ -17,18 +17,13 @@ type Server struct {
 	JokesMap    map[string]model.Joke
 }
 
-var S = Server{
-	Storage:     storage.St,
-	JokesStruct: []model.Joke{},
-	JokesMap:    map[string]model.Joke{},
-}
-
 //ErrNoMatches
 var ErrNoMatches = errors.New(" No matches")
 
-func ID(id string, s *Server) (model.Joke, error) {
-	for _, j := range S.JokesStruct {
-		S.JokesMap[j.ID] = j
+func (s *Server) ID(id string) (model.Joke, error) {
+	s.JokesMap = map[string]model.Joke{}
+	for _, j := range s.JokesStruct {
+		s.JokesMap[j.ID] = j
 	}
 	err := errors.New("no jokes with that ID")
 	for _, v := range s.JokesMap {
@@ -40,7 +35,7 @@ func ID(id string, s *Server) (model.Joke, error) {
 	return model.Joke{}, err
 }
 
-func Text(text string, s *Server) ([]model.Joke, error) {
+func (s *Server) Text(text string) ([]model.Joke, error) {
 
 	var result []model.Joke
 
@@ -55,7 +50,7 @@ func Text(text string, s *Server) ([]model.Joke, error) {
 	return nil, ErrNoMatches
 }
 
-func Funniest(m url.Values, s *Server) ([]model.Joke, error) {
+func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 
 	err := errors.New(" Bad request")
 
@@ -86,7 +81,8 @@ func Funniest(m url.Values, s *Server) ([]model.Joke, error) {
 	return []model.Joke{}, err
 }
 
-func Random(m url.Values, s *Server) ([]model.Joke, error) {
+func (s *Server) Random(m url.Values) ([]model.Joke, error) {
+
 	var result []model.Joke
 	count := 0
 	const defaultLimit = 10
@@ -110,7 +106,7 @@ func Random(m url.Values, s *Server) ([]model.Joke, error) {
 
 		if i < count {
 
-			a := S.JokesStruct[rand.Intn(len(s.JokesStruct))]
+			a := s.JokesStruct[rand.Intn(len(s.JokesStruct))]
 			result = append(result, a)
 
 		}
@@ -122,9 +118,7 @@ func Random(m url.Values, s *Server) ([]model.Joke, error) {
 	return nil, err
 }
 
-func Add(j model.Joke, s *Server) (model.Joke, error) {
-	s.JokesStruct = append(s.JokesStruct, j)
-
+func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	//jokeBytes, err := json.Marshal(s.JokesStruct)
 	//if err != nil {
 	//	errors.New("error marshalling")
@@ -135,6 +129,7 @@ func Add(j model.Joke, s *Server) (model.Joke, error) {
 	//	return Joke{}, errors.New("error writing file")
 	//}
 	//return j, err
+	s.JokesStruct = append(s.JokesStruct, j)
 	err := storage.St.Save(s.JokesStruct)
 	if err != nil {
 		return model.Joke{}, errors.New("error writing file")
@@ -143,6 +138,13 @@ func Add(j model.Joke, s *Server) (model.Joke, error) {
 	return j, err
 }
 
-//type Joke struct{
-//	*model.Joke
-//}
+func (s *Server) JStruct() []model.Joke {
+
+	err := errors.New("FFFFF")
+	s.JokesStruct, err = storage.St.Load()
+	if err != nil {
+		return nil
+	}
+
+	return s.JokesStruct
+}

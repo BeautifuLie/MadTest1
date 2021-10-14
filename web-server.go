@@ -33,9 +33,6 @@ func main() {
 type apiHandler struct {
 	server joker.Server
 }
-type fieldsServer struct {
-	field joker.Server
-}
 
 func handleRequest(h *apiHandler) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
@@ -53,21 +50,15 @@ func handleRequest(h *apiHandler) *mux.Router {
 
 func (h *apiHandler) Load(w http.ResponseWriter, r *http.Request) {
 
-	res, err := storage.St.Load()
-	joker.S.JokesStruct = res
-	if err != nil {
-		http.Error(w, "error", 404)
-	} else {
-		json.NewEncoder(w).Encode("File loaded")
-	}
-
+	h.server.JStruct()
+	json.NewEncoder(w).Encode("File loaded")
 }
 
 func (h *apiHandler) getJokeByID(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
-	res, err := joker.ID(id, &joker.S)
+	res, err := h.server.ID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -76,15 +67,15 @@ func (h *apiHandler) getJokeByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *apiHandler) getJokeByText(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+
 	vars := mux.Vars(r)
 	text := vars["text"]
-	res, err := joker.Text(text, &joker.S)
+	res, err := h.server.Text(text)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(&res)
 
 }
@@ -95,7 +86,7 @@ func (h *apiHandler) getFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err := joker.Funniest(m, &joker.S)
+	res, err := h.server.Funniest(m)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -113,7 +104,7 @@ func (h *apiHandler) getRandomJoke(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err, "Error parsing query")
 	}
 
-	res, err := joker.Random(m, &joker.S)
+	res, err := h.server.Random(m)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -145,7 +136,7 @@ func (h *apiHandler) addJoke(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	res, err1 := joker.Add(j, &joker.S)
+	res, err1 := h.server.Add(j)
 	if err1 != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -158,7 +149,7 @@ func (h *apiHandler) addJoke(w http.ResponseWriter, r *http.Request) {
 
 func (h *apiHandler) Save(w http.ResponseWriter, r *http.Request) {
 
-	err := storage.St.Save(joker.S.JokesStruct)
+	err := storage.St.Save(h.server.JStruct())
 	if err != nil {
 		http.Error(w, "error saving file", 500)
 	}

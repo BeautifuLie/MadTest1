@@ -49,8 +49,9 @@ func (fs *FileStorage) Save(jokes []model.Joke) error {
 	structBytes, err := json.MarshalIndent(jokes, "", " ")
 	if err != nil {
 		fmt.Errorf(" error marshalling JSON:%w:", err)
+		return err
 	}
-	err = ioutil.WriteFile("reddit_jokes2.json", structBytes, 0644)
+	err = ioutil.WriteFile("reddit_jokes.json", structBytes, 0644)
 	if err != nil {
 		return fmt.Errorf(" error saving file:%w", err)
 	}
