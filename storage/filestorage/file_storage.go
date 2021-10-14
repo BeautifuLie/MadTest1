@@ -12,33 +12,35 @@ type FileStorage struct {
 	fileName string
 }
 
-func NewFileStorage(fileName string) *FileStorage {
-	return f
-	//return &FileStorage{
-	//
-	//	fileName: fileName}
+func NewFileStorage(file string) *FileStorage {
+
+	return &FileStorage{
+		fileName: file}
 
 }
 
-var f = &FileStorage{
-	fileName: "reddit_jokes.json",
-}
+//var f = &FileStorage{
+//	fileName: "reddit_jokes.json",
+//}
 
 func (fs *FileStorage) Load() ([]model.Joke, error) {
 
-	file, err := os.Open(f.fileName)
+	fs.fileName = "db/reddit_jokes1.json"
+
+	file, err := os.Open(fs.fileName)
 
 	if err != nil {
-		return nil, fmt.Errorf("Can't open file %s: %w", fs.fileName, err)
+
+		return nil, fmt.Errorf(" Can't open file : %w", err)
 	}
 
 	defer file.Close()
 
 	var result []model.Joke
 
-	err = json.NewDecoder(file).Decode(&result)
-	if err != nil {
-		return nil, err
+	err1 := json.NewDecoder(file).Decode(&result)
+	if err1 != nil {
+		return nil, fmt.Errorf(" Can't decode file : %w", err1)
 	}
 
 	return result, nil
@@ -48,8 +50,7 @@ func (fs *FileStorage) Load() ([]model.Joke, error) {
 func (fs *FileStorage) Save(jokes []model.Joke) error {
 	structBytes, err := json.MarshalIndent(jokes, "", " ")
 	if err != nil {
-		fmt.Errorf(" error marshalling JSON:%w:", err)
-		return err
+		return fmt.Errorf(" error marshalling JSON:%w:", err)
 	}
 	err = ioutil.WriteFile("reddit_jokes.json", structBytes, 0644)
 	if err != nil {

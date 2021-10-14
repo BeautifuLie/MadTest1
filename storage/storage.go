@@ -2,6 +2,7 @@ package storage
 
 import (
 	"program/model"
+	"program/storage/filestorage"
 )
 
 ////go:generate  go run github.com/golang/mock/mockgen -package mocks -destination=./mock_storage.go -source=../storage/storage.go
@@ -10,4 +11,4 @@ type Storage interface {
 	Save([]model.Joke) error
 }
 
-var St Storage
+var St Storage = &filestorage.FileStorage{}

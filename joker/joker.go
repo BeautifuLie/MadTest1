@@ -12,24 +12,24 @@ import (
 )
 
 type Server struct {
-	Storage     storage.Storage
-	JokesStruct []model.Joke
-	JokesMap    map[string]model.Joke
+	storage     storage.Storage
+	jokesStruct []model.Joke
+	jokesMap    map[string]model.Joke
 }
 
 //ErrNoMatches
 var ErrNoMatches = errors.New(" No matches")
 
 func (s *Server) ID(id string) (model.Joke, error) {
-	s.JokesMap = map[string]model.Joke{}
-	for _, j := range s.JokesStruct {
-		s.JokesMap[j.ID] = j
+	s.jokesMap = map[string]model.Joke{}
+	for _, j := range s.jokesStruct {
+		s.jokesMap[j.ID] = j
 	}
 	err := errors.New("no jokes with that ID")
-	for _, v := range s.JokesMap {
+	for _, v := range s.jokesMap {
 
 		if strings.Contains(v.ID, id) {
-			return s.JokesMap[id], nil
+			return s.jokesMap[id], nil
 		}
 	}
 	return model.Joke{}, err
@@ -39,7 +39,7 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 
 	var result []model.Joke
 
-	for _, v := range s.JokesStruct {
+	for _, v := range s.jokesStruct {
 		if strings.Contains(v.Title, text) || strings.Contains(v.Body, text) {
 			result = append(result, v)
 		}
@@ -54,8 +54,8 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 
 	err := errors.New(" Bad request")
 
-	sort.SliceStable(s.JokesStruct, func(i, j int) bool {
-		return s.JokesStruct[i].Score > s.JokesStruct[j].Score
+	sort.SliceStable(s.jokesStruct, func(i, j int) bool {
+		return s.jokesStruct[i].Score > s.jokesStruct[j].Score
 	})
 
 	count := 0
@@ -70,13 +70,13 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 		if err != nil {
 			errors.New(" Error converting string to int")
 		}
-		if count > len(s.JokesStruct) {
+		if count > len(s.jokesStruct) {
 			return nil, errors.New(" Limit out of range")
 		}
 
 	}
-	if s.JokesStruct[:count] != nil {
-		return s.JokesStruct[:count], nil
+	if s.jokesStruct[:count] != nil {
+		return s.jokesStruct[:count], nil
 	}
 	return []model.Joke{}, err
 }
@@ -102,11 +102,11 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	} else {
 		count = defaultLimit
 	}
-	for i := range s.JokesStruct {
+	for i := range s.jokesStruct {
 
 		if i < count {
 
-			a := s.JokesStruct[rand.Intn(len(s.JokesStruct))]
+			a := s.jokesStruct[rand.Intn(len(s.jokesStruct))]
 			result = append(result, a)
 
 		}
@@ -129,8 +129,8 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	//	return Joke{}, errors.New("error writing file")
 	//}
 	//return j, err
-	s.JokesStruct = append(s.JokesStruct, j)
-	err := storage.St.Save(s.JokesStruct)
+	s.jokesStruct = append(s.jokesStruct, j)
+	err := storage.St.Save(s.jokesStruct)
 	if err != nil {
 		return model.Joke{}, errors.New("error writing file")
 	}
@@ -140,11 +140,11 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 
 func (s *Server) JStruct() []model.Joke {
 
-	err := errors.New("FFFFF")
-	s.JokesStruct, err = storage.St.Load()
+	err := errors.New("FFFF")
+	s.jokesStruct, err = storage.St.Load()
 	if err != nil {
 		return nil
 	}
 
-	return s.JokesStruct
+	return s.jokesStruct
 }
