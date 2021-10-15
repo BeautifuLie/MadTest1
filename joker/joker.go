@@ -12,7 +12,7 @@ import (
 )
 
 type Server struct {
-	storage     storage.Storage
+	//storage     storage.Storage
 	jokesStruct []model.Joke
 	jokesMap    map[string]model.Joke
 }
@@ -68,7 +68,9 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
 		count, _ = strconv.Atoi(v)
 	}
-
+	if len(s.jokesStruct) == 0 {
+		return nil, err
+	}
 	if count > len(s.jokesStruct) {
 		return nil, errors.New(" Limit out of range")
 	}
@@ -76,6 +78,7 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	if res != nil {
 		return res, nil
 	}
+
 	return []model.Joke{}, err
 }
 
@@ -126,16 +129,16 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 		return model.Joke{}, errors.New("error writing file")
 	}
 
-	return j, err
+	return j, nil
 }
 
 func (s *Server) JStruct() ([]model.Joke, error) {
 
-	err1 := errors.New(" Fail")
+	res, err := storage.St.Load()
+	s.jokesStruct = res
 
-	s.jokesStruct, err1 = storage.St.Load()
-	if err1 != nil {
-		return nil, err1
+	if err != nil {
+		return nil, err
 	}
 	return s.jokesStruct, nil
 }
