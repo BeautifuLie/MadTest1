@@ -25,14 +25,14 @@ func (s *Server) ID(id string) (model.Joke, error) {
 	for _, j := range s.jokesStruct {
 		s.jokesMap[j.ID] = j
 	}
-	err := errors.New("no jokes with that ID")
+
 	for _, v := range s.jokesMap {
 
 		if strings.Contains(v.ID, id) {
 			return s.jokesMap[id], nil
 		}
 	}
-	return model.Joke{}, err
+	return model.Joke{}, ErrNoMatches
 }
 
 func (s *Server) Text(text string) ([]model.Joke, error) {
@@ -52,7 +52,7 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 
-	err := errors.New(" Bad request")
+	err := errors.New(" Load file first")
 
 	sort.SliceStable(s.jokesStruct, func(i, j int) bool {
 		return s.jokesStruct[i].Score > s.jokesStruct[j].Score
@@ -60,29 +60,27 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 
 	count := 0
 	const defaultLimit = 10
-	v := ""
+	var v string
 
 	if len(m["limit"]) == 0 {
 		count = defaultLimit
 	} else {
 		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
-		count, err = strconv.Atoi(v)
-		if err != nil {
-			errors.New(" Error converting string to int")
-		}
-		if count > len(s.jokesStruct) {
-			return nil, errors.New(" Limit out of range")
-		}
-
+		count, _ = strconv.Atoi(v)
 	}
-	if s.jokesStruct[:count] != nil {
-		return s.jokesStruct[:count], nil
+
+	if count > len(s.jokesStruct) {
+		return nil, errors.New(" Limit out of range")
+	}
+	res := s.jokesStruct[:count]
+	if res != nil {
+		return res, nil
 	}
 	return []model.Joke{}, err
 }
 
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
-
+	err := errors.New(" Load file first")
 	var result []model.Joke
 	count := 0
 	const defaultLimit = 10
@@ -92,10 +90,7 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	} else {
 		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
 	}
-	a, err := strconv.Atoi(v)
-	if err != nil {
-		println(err.Error())
-	}
+	a, _ := strconv.Atoi(v)
 
 	if a > 0 {
 		count = a
@@ -103,14 +98,10 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 		count = defaultLimit
 	}
 	for i := range s.jokesStruct {
-
-		if i < count {
-
+		if i < count { //перебирает до указанного "count"
 			a := s.jokesStruct[rand.Intn(len(s.jokesStruct))]
 			result = append(result, a)
-
 		}
-
 	}
 	if result != nil {
 		return result, nil
@@ -138,13 +129,13 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	return j, err
 }
 
-func (s *Server) JStruct() []model.Joke {
+func (s *Server) JStruct() ([]model.Joke, error) {
 
-	err := errors.New("FFFF")
-	s.jokesStruct, err = storage.St.Load()
-	if err != nil {
-		return nil
+	err1 := errors.New(" Fail")
+
+	s.jokesStruct, err1 = storage.St.Load()
+	if err1 != nil {
+		return nil, err1
 	}
-
-	return s.jokesStruct
+	return s.jokesStruct, nil
 }

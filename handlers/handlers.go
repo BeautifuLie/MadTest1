@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"program/joker"
 	"program/model"
 	"program/storage"
@@ -33,11 +34,22 @@ func HandleRequest(h *ApiHandler) *mux.Router {
 
 func (h *ApiHandler) Load(w http.ResponseWriter, r *http.Request) {
 
-	err := h.Server.JStruct()
+	_, err := h.Server.JStruct()
+
 	if err != nil {
-		fmt.Errorf(" File not loaded%w", err)
+		switch errors.Cause(err).(type) {
+		case *os.PathError:
+			w.Write([]byte(err.Error()))
+
+		default:
+
+			w.Write([]byte("other error"))
+		}
+
+	} else {
+		json.NewEncoder(w).Encode("File loaded")
 	}
-	json.NewEncoder(w).Encode("File loaded")
+
 }
 
 func (h *ApiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
@@ -134,12 +146,13 @@ func (h *ApiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ApiHandler) Save(w http.ResponseWriter, r *http.Request) {
-	//a, err1:= filestorage.FileStorage.Load()
-
-	err := storage.St.Save(h.Server.JStruct())
+	str, err := h.Server.JStruct()
+	storage.St.Save(str)
+	//err := storage.St.Save(h.Server.JStruct())
 	if err != nil {
 		http.Error(w, "error saving file", 500)
+	} else {
+		json.NewEncoder(w).Encode("File saved")
 	}
-	json.NewEncoder(w).Encode("File saved")
 
 }

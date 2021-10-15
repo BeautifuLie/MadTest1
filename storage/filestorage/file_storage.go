@@ -3,6 +3,7 @@ package filestorage
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"program/model"
@@ -25,24 +26,17 @@ func NewFileStorage(file string) *FileStorage {
 
 func (fs *FileStorage) Load() ([]model.Joke, error) {
 
-	fs.fileName = "db/reddit_jokes1.json"
+	fs.fileName = "db/reddit_jokes.json"
 
 	file, err := os.Open(fs.fileName)
 
 	if err != nil {
-
-		return nil, fmt.Errorf(" Can't open file : %w", err)
+		return nil, errors.Wrap(err, "unable to open a file")
 	}
-
 	defer file.Close()
 
 	var result []model.Joke
-
-	err1 := json.NewDecoder(file).Decode(&result)
-	if err1 != nil {
-		return nil, fmt.Errorf(" Can't decode file : %w", err1)
-	}
-
+	json.NewDecoder(file).Decode(&result)
 	return result, nil
 
 }
@@ -52,7 +46,7 @@ func (fs *FileStorage) Save(jokes []model.Joke) error {
 	if err != nil {
 		return fmt.Errorf(" error marshalling JSON:%w:", err)
 	}
-	err = ioutil.WriteFile("reddit_jokes.json", structBytes, 0644)
+	err = ioutil.WriteFile("reddit_jokes1.json", structBytes, 0644)
 	if err != nil {
 		return fmt.Errorf(" error saving file:%w", err)
 	}
