@@ -9,7 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"program/handlers"
+	"program/model"
 	"program/storage"
+	"program/storage/filestorage"
 	"testing"
 )
 
@@ -19,30 +22,26 @@ func TestGetFunniest(t *testing.T) {
 		fmt.Sprintf("/jokes/funniest?limit=%v", 3), nil)
 	responseRecorder := httptest.NewRecorder()
 
-	s := storage.Server{
-		Storage:     storage.St,
-		JokesStruct: []storage.Joke{},
-		JokesMap:    map[string]storage.Joke{},
-	}
-	storage.St = &storage.S
-	_, err := storage.St.Load()
-	require.NoError(t, err)
+	h := handlers.RetHandler()
+	storage.St = &filestorage.FileStorage{}
+	h.Server.JStruct()
 
-	handleRequest(&s)
-	getFunniestJokes(responseRecorder, request)
+	handlers.HandleRequest(h)
+
+	h.GetFunniestJokes(responseRecorder, request)
 
 	resp := responseRecorder.Body.Bytes()
 
-	var j []storage.Joke
+	var j []model.Joke
 
-	json.Unmarshal(resp, &j)
+	err := json.Unmarshal(resp, &j)
 	require.NoError(t, err)
 
 	require.Equal(t, 3, len(j))
 
 	j1 := j[0]
-
-	assert.Equal(t, "On the condition he gets to install windows.\n\n\n", j1.Body)
+	assert.Equal(t, "On the condition he gets to "+
+		"install windows.\n\n\n", j1.Body)
 }
 
 func TestFindById(t *testing.T) {
@@ -52,25 +51,12 @@ func TestFindById(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"id": "4xjyho1"})
 	responseRecorder := httptest.NewRecorder()
 
-	s := storage.Server{
-		Storage:     storage.St,
-		JokesStruct: []storage.Joke{},
-		JokesMap:    map[string]storage.Joke{},
-	}
-	storage.St = &storage.S
-	_, err := storage.St.Load()
-	require.NoError(t, err)
-	handleRequest(&s)
+	h := handlers.RetHandler()
+	storage.St = &filestorage.FileStorage{}
+	h.Server.JStruct()
+	handlers.HandleRequest(h)
 
-	getJokeByID(responseRecorder, request)
-
-	resp := responseRecorder.Body.Bytes()
-
-	var js map[string]storage.Joke
-
-	json.Unmarshal(resp, &js)
-	require.NoError(t, err)
-
+	h.GetJokeByID(responseRecorder, request)
 	assert.Equal(t, 404, responseRecorder.Code)
 
 }
@@ -82,25 +68,12 @@ func TestFindByText(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"text": "porcupinetree"})
 	responseRecorder := httptest.NewRecorder()
 
-	s := storage.Server{
-		Storage:     storage.St,
-		JokesStruct: []storage.Joke{},
-		JokesMap:    map[string]storage.Joke{},
-	}
-	storage.St = &storage.S
-	_, err := storage.St.Load()
-	require.NoError(t, err)
+	h := handlers.RetHandler()
+	storage.St = &filestorage.FileStorage{}
+	h.Server.JStruct()
+	handlers.HandleRequest(h)
 
-	handleRequest(&s)
-
-	getJokeByText(responseRecorder, request)
-
-	resp := responseRecorder.Body.Bytes()
-
-	var js []storage.Joke
-
-	json.Unmarshal(resp, &js)
-	require.NoError(t, err)
+	h.GetJokeByText(responseRecorder, request)
 
 	assert.Equal(t, 404, responseRecorder.Code)
 
@@ -109,30 +82,18 @@ func TestFindByText(t *testing.T) {
 func TestAddJoke(t *testing.T) {
 
 	var jsonStr = []byte(`{"title":"Buy cheese and bread for breakfast.",
-							  "body":"And go away","score":50,"id":"7q6w5e"}`)
+							  "body":"And go away","score":1,"id":"7q6w5e"}`)
 	request := httptest.NewRequest(http.MethodPost,
 		fmt.Sprint("/jokes/"), bytes.NewBuffer(jsonStr))
 
 	responseRecorder := httptest.NewRecorder()
 
-	s := storage.Server{
-		Storage:     storage.St,
-		JokesStruct: []storage.Joke{},
-		JokesMap:    map[string]storage.Joke{},
-	}
-	storage.St = &storage.S
-	_, err := storage.St.Load()
-	require.NoError(t, err)
-	handleRequest(&s)
+	h := handlers.RetHandler()
+	storage.St = &filestorage.FileStorage{}
+	h.Server.JStruct()
+	handlers.HandleRequest(h)
 
-	addJoke(responseRecorder, request)
-
-	//resp := responseRecorder.Body.Bytes()
-	//
-	//var js []storage.Joke
-	//
-	//json.Unmarshal(resp, &js)
-	//require.NoError(t, err)
+	h.AddJoke(responseRecorder, request)
 
 	assert.Equal(t, 201, responseRecorder.Code)
 
@@ -144,16 +105,11 @@ func TestRandom(t *testing.T) {
 		fmt.Sprintf("/jokes/random"), nil)
 	rr := httptest.NewRecorder()
 
-	s := storage.Server{
-		Storage:     storage.St,
-		JokesStruct: []storage.Joke{},
-		JokesMap:    map[string]storage.Joke{},
-	}
-	storage.St = &storage.S
-	_, err := storage.St.Load()
-	require.NoError(t, err)
-	handleRequest(&s)
-	getRandomJoke(rr, request)
+	h := handlers.RetHandler()
+	storage.St = &filestorage.FileStorage{}
+	h.Server.JStruct()
+	handlers.HandleRequest(h)
+	h.GetRandomJoke(rr, request)
 
 	///////////////////////////////////////////////////
 
@@ -161,16 +117,11 @@ func TestRandom(t *testing.T) {
 		fmt.Sprintf("/jokes/random"), nil)
 	rr1 := httptest.NewRecorder()
 
-	s1 := storage.Server{
-		Storage:     storage.St,
-		JokesStruct: []storage.Joke{},
-		JokesMap:    map[string]storage.Joke{},
-	}
-	storage.St = &storage.S
-	_, err = storage.St.Load()
-	require.NoError(t, err)
-	handleRequest(&s1)
-	getRandomJoke(rr1, request1)
+	h1 := handlers.RetHandler()
+	storage.St = &filestorage.FileStorage{}
+	h.Server.JStruct()
+	handlers.HandleRequest(h1)
+	h.GetRandomJoke(rr1, request1)
 
 	assert.NotEqual(t, rr, rr1)
 
