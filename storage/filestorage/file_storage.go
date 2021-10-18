@@ -14,7 +14,7 @@ type FileStorage struct {
 }
 
 func NewFileStorage(file string) *FileStorage {
-	fmt.Println(file)
+
 	return &FileStorage{
 		fileName: file,
 	}
@@ -22,8 +22,6 @@ func NewFileStorage(file string) *FileStorage {
 }
 
 func (fs *FileStorage) Load() ([]model.Joke, error) {
-
-	fs.fileName = "db/reddit_jokes.json"
 
 	file, err := os.Open(fs.fileName)
 

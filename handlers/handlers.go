@@ -3,31 +3,29 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"program/joker"
 	"program/model"
-	"program/storage"
 )
 
 type apiHandler struct {
-	Server joker.Server
+	Server *joker.Server
 }
 
-func RetHandler() *apiHandler {
-	return &apiHandler{}
+func RetHandler(server *joker.Server) *apiHandler {
+	return &apiHandler{
+		Server: server,
+	}
 }
 
 func HandleRequest(h *apiHandler) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.HandleFunc("/jokes", homePage).Methods("GET")
-	myRouter.HandleFunc("/jokes/method/save", h.Save)
-	myRouter.HandleFunc("/jokes/method/load", h.Load)
+	myRouter.HandleFunc("/jokes", h.homePage).Methods("GET")
+
 	myRouter.HandleFunc("/jokes/funniest", h.GetFunniestJokes)
 	myRouter.HandleFunc("/jokes/random", h.GetRandomJoke)
 	myRouter.HandleFunc("/jokes", h.AddJoke).Methods("POST")
@@ -36,7 +34,7 @@ func HandleRequest(h *apiHandler) *mux.Router {
 
 	return myRouter
 }
-func homePage(w http.ResponseWriter, r *http.Request) {
+func (h *apiHandler) homePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "text/html")
 	t, err := template.ParseFiles("main_page.html")
 	if err != nil {
@@ -47,35 +45,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
-	}
-}
-
-func (h *apiHandler) Load(w http.ResponseWriter, r *http.Request) {
-
-	_, err := h.Server.JStruct()
-
-	if err != nil {
-		switch errors.Cause(err).(type) {
-		case *os.PathError:
-			_, err := w.Write([]byte(err.Error()))
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusNoContent)
-
-			}
-
-		default:
-
-			_, err := w.Write([]byte("other error"))
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-			}
-		}
-
-	} else {
-		err := json.NewEncoder(w).Encode("File loaded")
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-		}
 	}
 
 }
@@ -189,22 +158,4 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-}
-
-func (h *apiHandler) Save(w http.ResponseWriter, r *http.Request) {
-	//err := storage.St.Save(h.Server.JStruct())
-	str, err := h.Server.JStruct()
-	if err != nil {
-		http.Error(w, "error call JStruct", 500)
-	}
-	err = storage.St.Save(str)
-	if err != nil {
-		http.Error(w, "error saving file", 500)
-	} else {
-		err = json.NewEncoder(w).Encode("File saved")
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-		}
-	}
-
 }

@@ -11,8 +11,22 @@ import (
 	"strings"
 )
 
+func NewServer(storage storage.Storage) *Server {
+	s := &Server{
+		storage:     storage,
+		jokesStruct: []model.Joke{},
+		jokesMap:    map[string]model.Joke{},
+	}
+
+	_, err := s.LoadJokesToStruct()
+	if err != nil {
+		return nil
+	}
+	return s
+}
+
 type Server struct {
-	//storage     storage.Storage
+	storage     storage.Storage
 	jokesStruct []model.Joke
 	jokesMap    map[string]model.Joke
 }
@@ -88,13 +102,11 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	count := 0
 	const defaultLimit = 10
 	var v string
-	if len(m["limit"]) == 0 {
-		count = defaultLimit
-	} else {
-		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
+	var a int
+	if len(m["limit"]) > 0 {
+		v = m["limit"][0]
+		a, _ = strconv.Atoi(v)
 	}
-	a, _ := strconv.Atoi(v)
-
 	if a > 0 {
 		count = a
 	} else {
@@ -113,18 +125,9 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 }
 
 func (s *Server) Add(j model.Joke) (model.Joke, error) {
-	//jokeBytes, err := json.Marshal(s.JokesStruct)
-	//if err != nil {
-	//	errors.New("error marshalling")
-	//}
-	//
-	//err = ioutil.WriteFile("reddit_jokes.json", jokeBytes, 0644)
-	//if err != nil {
-	//	return Joke{}, errors.New("error writing file")
-	//}
-	//return j, err
+
 	s.jokesStruct = append(s.jokesStruct, j)
-	err := storage.St.Save(s.jokesStruct)
+	err := s.storage.Save(s.jokesStruct)
 	if err != nil {
 		return model.Joke{}, errors.New("error writing file")
 	}
@@ -132,13 +135,13 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	return j, nil
 }
 
-func (s *Server) JStruct() ([]model.Joke, error) {
+func (s *Server) LoadJokesToStruct() ([]model.Joke, error) {
 
-	res, err := storage.St.Load()
+	res, err := s.storage.Load()
 	s.jokesStruct = res
 
 	if err != nil {
-		return nil, err
+		return nil, errors.New(" error opening file")
 	}
 	return s.jokesStruct, nil
 }

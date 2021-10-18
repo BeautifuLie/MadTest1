@@ -1,17 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"program/handlers"
+	"program/joker"
 	"program/storage/filestorage"
 )
 
 func main() {
-
-	myRouter := handlers.HandleRequest(handlers.RetHandler())
 	fileName := filestorage.NewFileStorage("jokes.json")
-	fmt.Println(fileName)
+
+	server := joker.NewServer(fileName)
+
+	myRouter := handlers.HandleRequest(handlers.RetHandler(server))
 
 	err := http.ListenAndServe(":9090", myRouter)
 	if err != nil {

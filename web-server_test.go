@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"program/handlers"
+	"program/joker"
 	"program/model"
-	"program/storage"
 	"program/storage/filestorage"
 	"testing"
 )
@@ -22,11 +22,9 @@ func TestGetFunniest(t *testing.T) {
 		fmt.Sprintf("/jokes/funniest?limit=%v", 3), nil)
 	responseRecorder := httptest.NewRecorder()
 
-	h := handlers.RetHandler()
-
-	_, err := h.Server.JStruct()
-	require.NoError(t, err)
-
+	fileName := filestorage.NewFileStorage("jokes.json")
+	s := joker.NewServer(fileName)
+	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
 
 	h.GetFunniestJokes(responseRecorder, request)
@@ -35,7 +33,7 @@ func TestGetFunniest(t *testing.T) {
 
 	var j []model.Joke
 
-	err = json.Unmarshal(resp, &j)
+	err := json.Unmarshal(resp, &j)
 	require.NoError(t, err)
 
 	require.Equal(t, 3, len(j))
@@ -48,14 +46,13 @@ func TestGetFunniest(t *testing.T) {
 func TestFindById(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
-		fmt.Sprint("/jokes/{id}"), nil)
+		"/jokes/{id}", nil)
 	request = mux.SetURLVars(request, map[string]string{"id": "4xjyho1"})
 	responseRecorder := httptest.NewRecorder()
 
-	h := handlers.RetHandler()
-
-	_, err := h.Server.JStruct()
-	require.NoError(t, err)
+	fileName := filestorage.NewFileStorage("jokes.json")
+	s := joker.NewServer(fileName)
+	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
 
 	h.GetJokeByID(responseRecorder, request)
@@ -66,14 +63,13 @@ func TestFindById(t *testing.T) {
 func TestFindByText(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
-		fmt.Sprint("/jokes/search/{text}"), nil)
+		"/jokes/search/{text}", nil)
 	request = mux.SetURLVars(request, map[string]string{"text": "porcupinetree"})
 	responseRecorder := httptest.NewRecorder()
 
-	h := handlers.RetHandler()
-	storage.St = &filestorage.FileStorage{}
-	_, err := h.Server.JStruct()
-	require.NoError(t, err)
+	fileName := filestorage.NewFileStorage("jokes.json")
+	s := joker.NewServer(fileName)
+	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
 
 	h.GetJokeByText(responseRecorder, request)
@@ -87,14 +83,13 @@ func TestAddJoke(t *testing.T) {
 	var jsonStr = []byte(`{"title":"Buy cheese and bread for breakfast.",
 							  "body":"And go away","score":1,"id":"7q6w5e"}`)
 	request := httptest.NewRequest(http.MethodPost,
-		fmt.Sprint("/jokes/"), bytes.NewBuffer(jsonStr))
+		"/jokes/", bytes.NewBuffer(jsonStr))
 
 	responseRecorder := httptest.NewRecorder()
 
-	h := handlers.RetHandler()
-
-	_, err := h.Server.JStruct()
-	require.NoError(t, err)
+	fileName := filestorage.NewFileStorage("jokes.json")
+	s := joker.NewServer(fileName)
+	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
 
 	h.AddJoke(responseRecorder, request)
@@ -106,41 +101,27 @@ func TestAddJoke(t *testing.T) {
 func TestRandom(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
-		fmt.Sprintf("/jokes/random"), nil)
+		"/jokes/random", nil)
 	rr := httptest.NewRecorder()
 
-	h := handlers.RetHandler()
-
-	_, err := h.Server.JStruct()
-	require.NoError(t, err)
+	fileName := filestorage.NewFileStorage("jokes.json")
+	s := joker.NewServer(fileName)
+	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
 	h.GetRandomJoke(rr, request)
 
 	///////////////////////////////////////////////////
 
 	request1 := httptest.NewRequest(http.MethodGet,
-		fmt.Sprintf("/jokes/random"), nil)
+		"/jokes/random", nil)
 	rr1 := httptest.NewRecorder()
 
-	h1 := handlers.RetHandler()
-
-	_, err = h.Server.JStruct()
-	require.NoError(t, err)
+	fileName1 := filestorage.NewFileStorage("jokes.json")
+	s1 := joker.NewServer(fileName1)
+	h1 := handlers.RetHandler(s1)
 	handlers.HandleRequest(h1)
 	h.GetRandomJoke(rr1, request1)
 
 	assert.NotEqual(t, rr, rr1)
 
-}
-
-func TestLoad(t *testing.T) {
-	request := httptest.NewRequest(http.MethodGet,
-		fmt.Sprint("/jokes/method/load"), nil)
-	responseRecorder := httptest.NewRecorder()
-
-	h := handlers.RetHandler()
-	h.Load(responseRecorder, request)
-	resp := responseRecorder.Body.Bytes()
-
-	assert.Equal(t, "\"File loaded\"\n", string(resp))
 }
