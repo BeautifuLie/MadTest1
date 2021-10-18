@@ -23,8 +23,9 @@ func TestGetFunniest(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	h := handlers.RetHandler()
-	storage.St = &filestorage.FileStorage{}
-	h.Server.JStruct()
+
+	_, err := h.Server.JStruct()
+	require.NoError(t, err)
 
 	handlers.HandleRequest(h)
 
@@ -34,7 +35,7 @@ func TestGetFunniest(t *testing.T) {
 
 	var j []model.Joke
 
-	err := json.Unmarshal(resp, &j)
+	err = json.Unmarshal(resp, &j)
 	require.NoError(t, err)
 
 	require.Equal(t, 3, len(j))
@@ -52,8 +53,9 @@ func TestFindById(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	h := handlers.RetHandler()
-	storage.St = &filestorage.FileStorage{}
-	h.Server.JStruct()
+
+	_, err := h.Server.JStruct()
+	require.NoError(t, err)
 	handlers.HandleRequest(h)
 
 	h.GetJokeByID(responseRecorder, request)
@@ -70,7 +72,8 @@ func TestFindByText(t *testing.T) {
 
 	h := handlers.RetHandler()
 	storage.St = &filestorage.FileStorage{}
-	h.Server.JStruct()
+	_, err := h.Server.JStruct()
+	require.NoError(t, err)
 	handlers.HandleRequest(h)
 
 	h.GetJokeByText(responseRecorder, request)
@@ -89,8 +92,9 @@ func TestAddJoke(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	h := handlers.RetHandler()
-	storage.St = &filestorage.FileStorage{}
-	h.Server.JStruct()
+
+	_, err := h.Server.JStruct()
+	require.NoError(t, err)
 	handlers.HandleRequest(h)
 
 	h.AddJoke(responseRecorder, request)
@@ -106,8 +110,9 @@ func TestRandom(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	h := handlers.RetHandler()
-	storage.St = &filestorage.FileStorage{}
-	h.Server.JStruct()
+
+	_, err := h.Server.JStruct()
+	require.NoError(t, err)
 	handlers.HandleRequest(h)
 	h.GetRandomJoke(rr, request)
 
@@ -118,11 +123,24 @@ func TestRandom(t *testing.T) {
 	rr1 := httptest.NewRecorder()
 
 	h1 := handlers.RetHandler()
-	storage.St = &filestorage.FileStorage{}
-	h.Server.JStruct()
+
+	_, err = h.Server.JStruct()
+	require.NoError(t, err)
 	handlers.HandleRequest(h1)
 	h.GetRandomJoke(rr1, request1)
 
 	assert.NotEqual(t, rr, rr1)
 
+}
+
+func TestLoad(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet,
+		fmt.Sprint("/jokes/method/load"), nil)
+	responseRecorder := httptest.NewRecorder()
+
+	h := handlers.RetHandler()
+	h.Load(responseRecorder, request)
+	resp := responseRecorder.Body.Bytes()
+
+	assert.Equal(t, "\"File loaded\"\n", string(resp))
 }

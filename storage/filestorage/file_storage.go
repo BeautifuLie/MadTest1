@@ -14,15 +14,12 @@ type FileStorage struct {
 }
 
 func NewFileStorage(file string) *FileStorage {
-
+	fmt.Println(file)
 	return &FileStorage{
-		fileName: file}
+		fileName: file,
+	}
 
 }
-
-//var f = &FileStorage{
-//	fileName: "reddit_jokes.json",
-//}
 
 func (fs *FileStorage) Load() ([]model.Joke, error) {
 
@@ -36,7 +33,10 @@ func (fs *FileStorage) Load() ([]model.Joke, error) {
 	defer file.Close()
 
 	var result []model.Joke
-	json.NewDecoder(file).Decode(&result)
+	err = json.NewDecoder(file).Decode(&result)
+	if err != nil {
+		return nil, errors.Wrap(err, "error decoding file")
+	}
 	return result, nil
 
 }

@@ -57,15 +57,25 @@ func (h *apiHandler) Load(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch errors.Cause(err).(type) {
 		case *os.PathError:
-			w.Write([]byte(err.Error()))
+			_, err := w.Write([]byte(err.Error()))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNoContent)
+
+			}
 
 		default:
 
-			w.Write([]byte("other error"))
+			_, err := w.Write([]byte("other error"))
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+			}
 		}
 
 	} else {
-		json.NewEncoder(w).Encode("File loaded")
+		err := json.NewEncoder(w).Encode("File loaded")
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+		}
 	}
 
 }
@@ -79,7 +89,10 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
 }
 
 func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +105,10 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(&res)
+	err = json.NewEncoder(w).Encode(&res)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
 
 }
 
@@ -102,14 +118,17 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err := h.Server.Funniest(m)
+	res, err1 := h.Server.Funniest(m)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err1 != nil {
+		http.Error(w, err1.Error(), http.StatusBadRequest)
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 
 }
 
@@ -120,13 +139,16 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err, "Error parsing query")
 	}
 
-	res, err := h.Server.Random(m)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	res, err1 := h.Server.Random(m)
+	if err1 != nil {
+		http.Error(w, err1.Error(), http.StatusBadRequest)
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 
 }
 
@@ -146,31 +168,43 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	err = model.Joke.Validate(j)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(serverError{
+		err = json.NewEncoder(w).Encode(serverError{
 			Code:        "validation_err",
 			Description: err.Error(),
 		})
+		if err != nil {
+			http.Error(w, "error saving file", 500)
+		}
 		return
 	}
 	res, err1 := h.Server.Add(j)
 	if err1 != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error adding joke", http.StatusBadRequest)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(&res)
+	err = json.NewEncoder(w).Encode(&res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 }
 
 func (h *apiHandler) Save(w http.ResponseWriter, r *http.Request) {
-	str, err := h.Server.JStruct()
-	storage.St.Save(str)
 	//err := storage.St.Save(h.Server.JStruct())
+	str, err := h.Server.JStruct()
+	if err != nil {
+		http.Error(w, "error call JStruct", 500)
+	}
+	err = storage.St.Save(str)
 	if err != nil {
 		http.Error(w, "error saving file", 500)
 	} else {
-		json.NewEncoder(w).Encode("File saved")
+		err = json.NewEncoder(w).Encode("File saved")
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+		}
 	}
 
 }
