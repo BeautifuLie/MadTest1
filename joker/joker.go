@@ -11,6 +11,12 @@ import (
 	"strings"
 )
 
+type Server struct {
+	storage     storage.Storage
+	jokesStruct []model.Joke
+	jokesMap    map[string]model.Joke
+}
+
 func NewServer(storage storage.Storage) *Server {
 	s := &Server{
 		storage:     storage,
@@ -23,12 +29,6 @@ func NewServer(storage storage.Storage) *Server {
 		return nil
 	}
 	return s
-}
-
-type Server struct {
-	storage     storage.Storage
-	jokesStruct []model.Joke
-	jokesMap    map[string]model.Joke
 }
 
 //ErrNoMatches

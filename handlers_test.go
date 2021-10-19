@@ -22,8 +22,10 @@ func TestGetFunniest(t *testing.T) {
 		fmt.Sprintf("/jokes/funniest?limit=%v", 3), nil)
 	responseRecorder := httptest.NewRecorder()
 
-	fileName := filestorage.NewFileStorage("jokes.json")
+	fileName := filestorage.NewFileStorage("db/reddit_jokes.json")
+
 	s := joker.NewServer(fileName)
+
 	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
 
@@ -42,7 +44,6 @@ func TestGetFunniest(t *testing.T) {
 	assert.Equal(t, "On the condition he gets to "+
 		"install windows.\n\n\n", j1.Body)
 }
-
 func TestFindById(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,

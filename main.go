@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	fileName := filestorage.NewFileStorage("jokes.json")
+	fileName := filestorage.NewFileStorage("db/reddit_jokes.json")
 
 	server := joker.NewServer(fileName)
 
