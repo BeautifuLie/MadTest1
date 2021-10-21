@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"program/handlers"
 	"program/joker"
@@ -8,15 +9,13 @@ import (
 )
 
 func main() {
+
 	fileName := filestorage.NewFileStorage("db/reddit_jokes.json")
 
 	server := joker.NewServer(fileName)
 
 	myRouter := handlers.HandleRequest(handlers.RetHandler(server))
 
-	err := http.ListenAndServe(":9090", myRouter)
-	if err != nil {
-		panic(err)
-	}
+	log.Fatal(http.ListenAndServe(":9090", myRouter))
 
 }

@@ -19,13 +19,16 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="da5bda5c-916d-40fb-8ee4-db8528728cd1" name="Default Changelist" comment="upd load&amp;save">
-      <change afterPath="$PROJECT_DIR$/handlers_test.go" afterDir="false" />
+    <list default="true" id="da5bda5c-916d-40fb-8ee4-db8528728cd1" name="Default Changelist" comment="refactor">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/handlers.go" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/handlers.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/handlers_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/joker/joker.go" beforeDir="false" afterPath="$PROJECT_DIR$/joker/joker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/reddit_jokes.json" beforeDir="false" afterPath="$PROJECT_DIR$/db/reddit_jokes.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web-server.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web-server_test.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/filestorage/file_storage.go" beforeDir="false" afterPath="$PROJECT_DIR$/storage/filestorage/file_storage.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,8 +68,8 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/handlers" />
-    <property name="settings.editor.selected.configurable" value="com.goide.configuration.GoLibrariesConfigurableProvider" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="go.vgo" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -80,16 +83,36 @@
       <recent name="C:\Users\Lafazan\GO\MadAppGangTest\mocks" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestAdd in program/joker">
-    <configuration name="TestAdd in program/joker" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Build.go build program">
+    <configuration name="go build program" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="MadAppGangTest" />
-      <working_directory value="$PROJECT_DIR$/joker" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <filePath value="$PROJECT_DIR$/main.go" />
+      <package value="program" />
+      <directory value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestAddJoke in program" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="MadAppGangTest" />
+      <working_directory value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="program/joker" />
+      <package value="program" />
       <directory value="$PROJECT_DIR$/" />
       <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestAdd$" />
+      <pattern value="^TestAddJoke$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestFindById in program" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="MadAppGangTest" />
+      <working_directory value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="program" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestFindById$" />
       <method v="2" />
     </configuration>
     <configuration name="TestGetFunniest in program" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -98,17 +121,6 @@
       <framework value="gotest" />
       <kind value="PACKAGE" />
       <package value="program" />
-      <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestGetFunniest$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestGetFunniest in program/joker" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="MadAppGangTest" />
-      <working_directory value="$PROJECT_DIR$/joker" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="program/joker" />
       <directory value="$PROJECT_DIR$/" />
       <filePath value="$PROJECT_DIR$/" />
       <pattern value="^TestGetFunniest$" />
@@ -125,30 +137,20 @@
       <pattern value="^TestServer_LoadJokesToStruct$" />
       <method v="2" />
     </configuration>
-    <configuration name="go test program" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="MadAppGangTest" />
-      <working_directory value="$PROJECT_DIR$" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="program" />
-      <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/" />
-      <method v="2" />
-    </configuration>
     <list>
-      <item itemvalue="Go Test.TestGetFunniest in program" />
-      <item itemvalue="Go Test.TestGetFunniest in program/joker" />
-      <item itemvalue="Go Test.TestAdd in program/joker" />
-      <item itemvalue="Go Test.go test program" />
+      <item itemvalue="Go Build.go build program" />
       <item itemvalue="Go Test.TestServer_LoadJokesToStruct in program/joker" />
+      <item itemvalue="Go Test.TestGetFunniest in program" />
+      <item itemvalue="Go Test.TestFindById in program" />
+      <item itemvalue="Go Test.TestAddJoke in program" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestAdd in program/joker" />
-        <item itemvalue="Go Test.TestServer_LoadJokesToStruct in program/joker" />
-        <item itemvalue="Go Test.go test program" />
-        <item itemvalue="Go Test.TestGetFunniest in program/joker" />
+        <item itemvalue="Go Build.go build program" />
+        <item itemvalue="Go Test.TestAddJoke in program" />
+        <item itemvalue="Go Test.TestFindById in program" />
         <item itemvalue="Go Test.TestGetFunniest in program" />
+        <item itemvalue="Go Test.TestServer_LoadJokesToStruct in program/joker" />
       </list>
     </recent_temporary>
   </component>
@@ -175,16 +177,17 @@
     <MESSAGE value="added html file, update errors,tests" />
     <MESSAGE value="upd" />
     <MESSAGE value="upd load&amp;save" />
-    <option name="LAST_COMMIT_MESSAGE" value="upd load&amp;save" />
+    <MESSAGE value="refactor" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
   </component>
   <component name="WindowStateProjectService">
-    <state x="414" y="194" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1634109410980">
+    <state x="414" y="194" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1634802570954">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="414" y="194" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1634109410980" />
+    <state x="414" y="194" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1634802570954" />
     <state x="1131" y="334" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1634023125855">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
@@ -193,46 +196,46 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="1055" y="108" width="754" height="865" maximized="true" key="DiffContextDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1634199531389" />
-    <state x="837" y="287" key="FileChooserDialogImpl" timestamp="1634034004305">
+    <state x="837" y="287" key="FileChooserDialogImpl" timestamp="1634799947768">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="837" y="287" key="FileChooserDialogImpl/0.0.1920.1080@0.0.1920.1080" timestamp="1634034004305" />
-    <state width="894" height="228" key="GridCell.Tab.0.bottom" timestamp="1634658025609">
+    <state x="837" y="287" key="FileChooserDialogImpl/0.0.1920.1080@0.0.1920.1080" timestamp="1634799947768" />
+    <state width="894" height="228" key="GridCell.Tab.0.bottom" timestamp="1634750785446">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="894" height="228" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1634658025609" />
-    <state width="894" height="228" key="GridCell.Tab.0.center" timestamp="1634658025609">
+    <state width="894" height="228" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1634750785446" />
+    <state width="894" height="228" key="GridCell.Tab.0.center" timestamp="1634750785446">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="894" height="228" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1634658025609" />
-    <state width="894" height="228" key="GridCell.Tab.0.left" timestamp="1634658025609">
+    <state width="894" height="228" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1634750785446" />
+    <state width="894" height="228" key="GridCell.Tab.0.left" timestamp="1634750785445">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="894" height="228" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1634658025609" />
-    <state width="894" height="228" key="GridCell.Tab.0.right" timestamp="1634658025609">
+    <state width="894" height="228" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1634750785445" />
+    <state width="894" height="228" key="GridCell.Tab.0.right" timestamp="1634750785446">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="894" height="228" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1634658025609" />
-    <state width="1877" height="352" key="GridCell.Tab.1.bottom" timestamp="1634636217609">
+    <state width="894" height="228" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1634750785446" />
+    <state width="1877" height="352" key="GridCell.Tab.1.bottom" timestamp="1634661950458">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1634636217609" />
-    <state width="1877" height="352" key="GridCell.Tab.1.center" timestamp="1634636217609">
+    <state width="1877" height="352" key="GridCell.Tab.1.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1634661950458" />
+    <state width="1877" height="352" key="GridCell.Tab.1.center" timestamp="1634661950457">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.center/0.0.1920.1080@0.0.1920.1080" timestamp="1634636217609" />
-    <state width="1877" height="352" key="GridCell.Tab.1.left" timestamp="1634636217609">
+    <state width="1877" height="352" key="GridCell.Tab.1.center/0.0.1920.1080@0.0.1920.1080" timestamp="1634661950457" />
+    <state width="1877" height="352" key="GridCell.Tab.1.left" timestamp="1634661950457">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.left/0.0.1920.1080@0.0.1920.1080" timestamp="1634636217609" />
-    <state width="1877" height="352" key="GridCell.Tab.1.right" timestamp="1634636217609">
+    <state width="1877" height="352" key="GridCell.Tab.1.left/0.0.1920.1080@0.0.1920.1080" timestamp="1634661950457" />
+    <state width="1877" height="352" key="GridCell.Tab.1.right" timestamp="1634661950457">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.right/0.0.1920.1080@0.0.1920.1080" timestamp="1634636217609" />
-    <state x="558" y="177" key="SettingsEditor" timestamp="1634025537974">
+    <state width="1877" height="352" key="GridCell.Tab.1.right/0.0.1920.1080@0.0.1920.1080" timestamp="1634661950457" />
+    <state x="558" y="177" key="SettingsEditor" timestamp="1634802700574">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="558" y="177" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1634025537974" />
+    <state x="558" y="177" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1634802700574" />
     <state x="985" y="282" key="Vcs.Push.Dialog.v2" timestamp="1634288001173">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>

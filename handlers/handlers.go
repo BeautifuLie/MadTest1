@@ -24,8 +24,8 @@ func RetHandler(server *joker.Server) *apiHandler {
 
 func HandleRequest(h *apiHandler) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.HandleFunc("/jokes", h.homePage).Methods("GET")
 
+	myRouter.HandleFunc("/jokes", h.homePage).Methods("GET")
 	myRouter.HandleFunc("/jokes/funniest", h.GetFunniestJokes)
 	myRouter.HandleFunc("/jokes/random", h.GetRandomJoke)
 	myRouter.HandleFunc("/jokes", h.AddJoke).Methods("POST")
@@ -35,7 +35,7 @@ func HandleRequest(h *apiHandler) *mux.Router {
 	return myRouter
 }
 func (h *apiHandler) homePage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-type", "text/html")
+
 	t, err := template.ParseFiles("main_page.html")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -46,7 +46,7 @@ func (h *apiHandler) homePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-
+	w.Header().Set("Content-type", "text/html")
 }
 
 func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +58,7 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -93,7 +94,7 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err1.Error(), http.StatusBadRequest)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -114,6 +115,7 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -152,8 +154,8 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(&res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

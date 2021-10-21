@@ -44,6 +44,7 @@ func TestGetFunniest(t *testing.T) {
 	assert.Equal(t, "On the condition he gets to "+
 		"install windows.\n\n\n", j1.Body)
 }
+
 func TestFindById(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
@@ -94,7 +95,6 @@ func TestAddJoke(t *testing.T) {
 	handlers.HandleRequest(h)
 
 	h.AddJoke(responseRecorder, request)
-
 	assert.Equal(t, 201, responseRecorder.Code)
 
 }

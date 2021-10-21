@@ -33,6 +33,7 @@ func NewServer(storage storage.Storage) *Server {
 
 //ErrNoMatches
 var ErrNoMatches = errors.New(" No matches")
+var ErrLimitOut = errors.New(" Limit out of range")
 
 func (s *Server) ID(id string) (model.Joke, error) {
 	s.jokesMap = map[string]model.Joke{}
@@ -75,18 +76,22 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	count := 0
 	const defaultLimit = 10
 	var v string
-
-	if len(m["limit"]) == 0 {
-		count = defaultLimit
-	} else {
-		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
-		count, _ = strconv.Atoi(v)
+	var a int
+	if len(m["limit"]) > 0 {
+		v = m["limit"][0]
+		a, _ = strconv.Atoi(v)
 	}
+	if a > 0 {
+		count = a
+	} else {
+		count = defaultLimit
+	}
+
 	if len(s.jokesStruct) == 0 {
 		return nil, err
 	}
 	if count > len(s.jokesStruct) {
-		return nil, errors.New(" Limit out of range")
+		return nil, ErrLimitOut
 	}
 	res := s.jokesStruct[:count]
 	if res != nil {
@@ -111,6 +116,9 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 		count = a
 	} else {
 		count = defaultLimit
+	}
+	if count > len(s.jokesStruct) {
+		return nil, ErrLimitOut
 	}
 	for i := range s.jokesStruct {
 		if i < count { //перебирает до указанного "count"
