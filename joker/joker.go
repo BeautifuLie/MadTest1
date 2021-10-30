@@ -9,9 +9,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type Server struct {
+	mu          sync.RWMutex
 	storage     storage.Storage
 	jokesStruct []model.Joke
 	jokesMap    map[string]model.Joke
@@ -36,6 +38,9 @@ var ErrNoMatches = errors.New(" No matches")
 var ErrLimitOut = errors.New(" Limit out of range")
 
 func (s *Server) ID(id string) (model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	s.jokesMap = map[string]model.Joke{}
 	for _, j := range s.jokesStruct {
 		s.jokesMap[j.ID] = j
@@ -51,6 +56,8 @@ func (s *Server) ID(id string) (model.Joke, error) {
 }
 
 func (s *Server) Text(text string) ([]model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	var result []model.Joke
 
@@ -66,6 +73,8 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 }
 
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	err := errors.New(" Load file first")
 
@@ -102,6 +111,9 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 }
 
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	err := errors.New(" Load file first")
 	var result []model.Joke
 	count := 0
@@ -133,6 +145,8 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 }
 
 func (s *Server) Add(j model.Joke) (model.Joke, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.jokesStruct = append(s.jokesStruct, j)
 	err := s.storage.Save(s.jokesStruct)
