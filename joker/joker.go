@@ -30,6 +30,11 @@ func NewServer(storage storage.Storage) *Server {
 	if err != nil {
 		return nil
 	}
+	_, err = s.LoadJokesToMap()
+	if err != nil {
+		return nil
+	}
+
 	return s
 }
 
@@ -41,17 +46,6 @@ func (s *Server) ID(id string) (model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	s.jokesMap = map[string]model.Joke{}
-	for _, j := range s.jokesStruct {
-		s.jokesMap[j.ID] = j
-	}
-
-	// for _, v := range s.jokesMap {
-
-	// 	if strings.Contains(v.ID, id) {
-	// 		return s.jokesMap[id], nil
-	// 	}
-	// }
 	if _, ok := s.jokesMap[id]; ok {
 		return s.jokesMap[id], nil
 	}
@@ -174,4 +168,18 @@ func (s *Server) LoadJokesToStruct() ([]model.Joke, error) {
 		return nil, errors.New(" error opening file")
 	}
 	return s.jokesStruct, nil
+}
+
+func (s *Server) LoadJokesToMap() (map[string]model.Joke, error) {
+	s.jokesMap = map[string]model.Joke{}
+	res, err := s.storage.Load()
+
+	for _, j := range res {
+		s.jokesMap[j.ID] = j
+	}
+	if err != nil {
+		return nil, errors.New(" error opening file")
+	}
+
+	return s.jokesMap, nil
 }
