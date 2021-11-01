@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"html/template"
 	"io"
 	"log"
@@ -10,6 +9,8 @@ import (
 	"net/url"
 	"program/joker"
 	"program/model"
+
+	"github.com/gorilla/mux"
 )
 
 type apiHandler struct {
@@ -26,11 +27,11 @@ func HandleRequest(h *apiHandler) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	myRouter.HandleFunc("/jokes", h.homePage).Methods("GET")
-	myRouter.HandleFunc("/jokes/funniest", h.GetFunniestJokes)
-	myRouter.HandleFunc("/jokes/random", h.GetRandomJoke)
+	myRouter.HandleFunc("/jokes/funniest", h.GetFunniestJokes).Methods("GET")
+	myRouter.HandleFunc("/jokes/random", h.GetRandomJoke).Methods("GET")
 	myRouter.HandleFunc("/jokes", h.AddJoke).Methods("POST")
-	myRouter.HandleFunc("/jokes/{id}", h.GetJokeByID)
-	myRouter.HandleFunc("/jokes/search/{text}", h.GetJokeByText)
+	myRouter.HandleFunc("/jokes/{id}", h.GetJokeByID).Methods("GET")
+	myRouter.HandleFunc("/jokes/search/{text}", h.GetJokeByText).Methods("GET")
 
 	return myRouter
 }
@@ -38,7 +39,7 @@ func (h *apiHandler) homePage(w http.ResponseWriter, r *http.Request) {
 
 	t, err := template.ParseFiles("main_page.html")
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	err = t.Execute(w, nil)
@@ -124,6 +125,7 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
+
 	type serverError struct {
 		Code        string
 		Description string
