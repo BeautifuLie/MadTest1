@@ -46,12 +46,16 @@ func (s *Server) ID(id string) (model.Joke, error) {
 		s.jokesMap[j.ID] = j
 	}
 
-	for _, v := range s.jokesMap {
+	// for _, v := range s.jokesMap {
 
-		if strings.Contains(v.ID, id) {
-			return s.jokesMap[id], nil
-		}
+	// 	if strings.Contains(v.ID, id) {
+	// 		return s.jokesMap[id], nil
+	// 	}
+	// }
+	if _, ok := s.jokesMap[id]; ok {
+		return s.jokesMap[id], nil
 	}
+
 	return model.Joke{}, ErrNoMatches
 }
 
@@ -62,10 +66,14 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 	var result []model.Joke
 
 	for _, v := range s.jokesStruct {
+		v.Title = strings.ToLower(v.Title)
+		v.Body = strings.ToLower(v.Body)
+		text = strings.ToLower(text)
 		if strings.Contains(v.Title, text) || strings.Contains(v.Body, text) {
 			result = append(result, v)
 		}
 	}
+
 	if result != nil {
 		return result, nil
 	}
