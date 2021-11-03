@@ -9,41 +9,65 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type Server struct {
-	//storage     storage.Storage
+	mu          sync.RWMutex
+	storage     storage.Storage
 	jokesStruct []model.Joke
 	jokesMap    map[string]model.Joke
 }
 
+func NewServer(storage storage.Storage) *Server {
+	s := &Server{
+		storage:     storage,
+		jokesStruct: []model.Joke{},
+		jokesMap:    map[string]model.Joke{},
+	}
+
+	_, err := s.LoadJokesToStruct()
+	if err != nil {
+		return nil
+	}
+	_, err = s.LoadJokesToMap()
+	if err != nil {
+		return nil
+	}
+
+	return s
+}
+
 //ErrNoMatches
 var ErrNoMatches = errors.New(" No matches")
+var ErrLimitOut = errors.New(" Limit out of range")
 
 func (s *Server) ID(id string) (model.Joke, error) {
-	s.jokesMap = map[string]model.Joke{}
-	for _, j := range s.jokesStruct {
-		s.jokesMap[j.ID] = j
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if _, ok := s.jokesMap[id]; ok {
+		return s.jokesMap[id], nil
 	}
 
-	for _, v := range s.jokesMap {
-
-		if strings.Contains(v.ID, id) {
-			return s.jokesMap[id], nil
-		}
-	}
 	return model.Joke{}, ErrNoMatches
 }
 
 func (s *Server) Text(text string) ([]model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	var result []model.Joke
 
 	for _, v := range s.jokesStruct {
+		v.Title = strings.ToLower(v.Title)
+		v.Body = strings.ToLower(v.Body)
+		text = strings.ToLower(text)
 		if strings.Contains(v.Title, text) || strings.Contains(v.Body, text) {
 			result = append(result, v)
 		}
 	}
+
 	if result != nil {
 		return result, nil
 	}
@@ -51,6 +75,8 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 }
 
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	err := errors.New(" Load file first")
 
@@ -61,18 +87,22 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	count := 0
 	const defaultLimit = 10
 	var v string
-
-	if len(m["limit"]) == 0 {
-		count = defaultLimit
-	} else {
-		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
-		count, _ = strconv.Atoi(v)
+	var a int
+	if len(m["limit"]) > 0 {
+		v = m["limit"][0]
+		a, _ = strconv.Atoi(v)
 	}
+	if a > 0 {
+		count = a
+	} else {
+		count = defaultLimit
+	}
+
 	if len(s.jokesStruct) == 0 {
 		return nil, err
 	}
 	if count > len(s.jokesStruct) {
-		return nil, errors.New(" Limit out of range")
+		return nil, ErrLimitOut
 	}
 	res := s.jokesStruct[:count]
 	if res != nil {
@@ -83,22 +113,26 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 }
 
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	err := errors.New(" Load file first")
 	var result []model.Joke
 	count := 0
 	const defaultLimit = 10
 	var v string
-	if len(m["limit"]) == 0 {
-		count = defaultLimit
-	} else {
-		v = m["limit"][0] // 0 для того, чтобы брать первый параметр  запроса
+	var a int
+	if len(m["limit"]) > 0 {
+		v = m["limit"][0]
+		a, _ = strconv.Atoi(v)
 	}
-	a, _ := strconv.Atoi(v)
-
 	if a > 0 {
 		count = a
 	} else {
 		count = defaultLimit
+	}
+	if count > len(s.jokesStruct) {
+		return nil, ErrLimitOut
 	}
 	for i := range s.jokesStruct {
 		if i < count { //перебирает до указанного "count"
@@ -113,18 +147,11 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 }
 
 func (s *Server) Add(j model.Joke) (model.Joke, error) {
-	//jokeBytes, err := json.Marshal(s.JokesStruct)
-	//if err != nil {
-	//	errors.New("error marshalling")
-	//}
-	//
-	//err = ioutil.WriteFile("reddit_jokes.json", jokeBytes, 0644)
-	//if err != nil {
-	//	return Joke{}, errors.New("error writing file")
-	//}
-	//return j, err
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.jokesStruct = append(s.jokesStruct, j)
-	err := storage.St.Save(s.jokesStruct)
+	err := s.storage.Save(s.jokesStruct)
 	if err != nil {
 		return model.Joke{}, errors.New("error writing file")
 	}
@@ -132,13 +159,27 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	return j, nil
 }
 
-func (s *Server) JStruct() ([]model.Joke, error) {
+func (s *Server) LoadJokesToStruct() ([]model.Joke, error) {
 
-	res, err := storage.St.Load()
+	res, err := s.storage.Load()
 	s.jokesStruct = res
 
 	if err != nil {
-		return nil, err
+		return nil, errors.New(" error opening file")
 	}
 	return s.jokesStruct, nil
+}
+
+func (s *Server) LoadJokesToMap() (map[string]model.Joke, error) {
+	s.jokesMap = map[string]model.Joke{}
+	res, err := s.storage.Load()
+
+	for _, j := range res {
+		s.jokesMap[j.ID] = j
+	}
+	if err != nil {
+		return nil, errors.New(" error opening file")
+	}
+
+	return s.jokesMap, nil
 }

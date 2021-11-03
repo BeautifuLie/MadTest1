@@ -16,17 +16,12 @@ type FileStorage struct {
 func NewFileStorage(file string) *FileStorage {
 
 	return &FileStorage{
-		fileName: file}
+		fileName: file,
+	}
 
 }
 
-//var f = &FileStorage{
-//	fileName: "reddit_jokes.json",
-//}
-
 func (fs *FileStorage) Load() ([]model.Joke, error) {
-
-	fs.fileName = "db/reddit_jokes.json"
 
 	file, err := os.Open(fs.fileName)
 
@@ -36,7 +31,10 @@ func (fs *FileStorage) Load() ([]model.Joke, error) {
 	defer file.Close()
 
 	var result []model.Joke
-	json.NewDecoder(file).Decode(&result)
+	err = json.NewDecoder(file).Decode(&result)
+	if err != nil {
+		return nil, errors.Wrap(err, "error decoding file")
+	}
 	return result, nil
 
 }
@@ -46,7 +44,7 @@ func (fs *FileStorage) Save(jokes []model.Joke) error {
 	if err != nil {
 		return fmt.Errorf(" error marshalling JSON:%w:", err)
 	}
-	err = ioutil.WriteFile("reddit_jokes1.json", structBytes, 0644)
+	err = ioutil.WriteFile("db/reddit_jokes.json", structBytes, 0644)
 	if err != nil {
 		return fmt.Errorf(" error saving file:%w", err)
 	}
