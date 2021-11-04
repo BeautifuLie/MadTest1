@@ -45,14 +45,16 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	res, err := h.Server.ID(id)
+
 	if err != nil {
-		respondeError(err, w)
+		respondError(err, w)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -62,15 +64,15 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 	text := vars["text"]
 	res, err := h.Server.Text(text)
 	if err != nil {
-		respondeError(err, w)
+		respondError(err, w)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(&res)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
 }
 
 func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
@@ -79,19 +81,19 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	res, err1 := h.Server.Funniest(m)
 
 	if err1 != nil {
-
-		respondeError(err1, w)
+		respondError(err1, w)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-
 }
 
 func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +105,7 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 
 	res, err1 := h.Server.Random(m)
 	if err1 != nil {
-		respondeError(err1, w)
+		respondError(err1, w)
 		return
 	}
 
@@ -112,7 +114,6 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-
 }
 
 func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
@@ -131,14 +132,15 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 			Code:        "validation_err",
 			Description: err.Error(),
 		})
+
 		if err != nil {
-			http.Error(w, "error saving file", 500)
+			http.Error(w, "error saving file", http.StatusInternalServerError)
 		}
 		return
 	}
 	res, err1 := h.Server.Add(j)
 	if err1 != nil {
-		respondeError(err1, w)
+		respondError(err1, w)
 		return
 	}
 
@@ -155,18 +157,12 @@ type serverError struct {
 	Description string
 }
 
-func respondeError(err error, w http.ResponseWriter) {
+func respondError(err error, w http.ResponseWriter) {
 	if errors.Is(err, joker.ErrNoMatches) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if errors.Is(err, joker.ErrLimitOut) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} else if errors.Is(err, joker.ErrOpenFile) {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if errors.Is(err, joker.ErrNoFile) {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
