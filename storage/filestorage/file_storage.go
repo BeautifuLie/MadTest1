@@ -27,7 +27,7 @@ func (fs *FileStorage) Load() ([]model.Joke, error) {
 	file, err := os.Open(fs.fileName)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	defer file.Close()
