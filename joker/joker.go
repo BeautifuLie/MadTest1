@@ -36,16 +36,10 @@ func NewServer(storage storage.Storage) *Server {
 //Errors
 var ErrNoMatches = errors.New(" No matches")
 var ErrLimitOut = errors.New(" Limit out of range")
-var ErrOpenFile = errors.New(" The system cannot find the file")
-var ErrNoFile = errors.New(" No file to write")
 
 func (s *Server) ID(id string) (model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	if len(s.jokesMap) == 0 {
-		return model.Joke{}, ErrOpenFile
-	}
 
 	if _, ok := s.jokesMap[id]; ok {
 		return s.jokesMap[id], nil
@@ -57,10 +51,6 @@ func (s *Server) ID(id string) (model.Joke, error) {
 func (s *Server) Text(text string) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	if len(s.jokesStruct) == 0 {
-		return nil, ErrOpenFile
-	}
 
 	var result []model.Joke
 
@@ -84,10 +74,6 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	if len(s.jokesStruct) == 0 {
-		return nil, ErrOpenFile
-	}
 
 	sort.SliceStable(s.jokesStruct, func(i, j int) bool {
 		return s.jokesStruct[i].Score > s.jokesStruct[j].Score
@@ -115,19 +101,16 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	if res != nil {
 		return res, nil
 	}
-
-	return nil, ErrOpenFile
+	err := errors.New(" there are no jokes in the 'funniest' section ")
+	return nil, err
 }
 
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if len(s.jokesStruct) == 0 {
-		return nil, ErrOpenFile
-	}
-
 	var result []model.Joke
+
 	count := 0
 	const defaultLimit = 10
 	var v string
@@ -157,16 +140,14 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	if result != nil {
 		return result, nil
 	}
-
-	return nil, ErrOpenFile
+	err := errors.New(" there are no jokes in the 'random' section ")
+	return nil, err
 }
 
 func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if len(s.jokesStruct) == 0 {
-		return model.Joke{}, ErrNoFile
-	}
+
 	s.jokesStruct = append(s.jokesStruct, j)
 	err := s.storage.Save(s.jokesStruct)
 	if err != nil {
