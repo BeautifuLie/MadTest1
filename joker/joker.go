@@ -26,19 +26,14 @@ func NewServer(storage storage.Storage) *Server {
 		jokesMap:    map[string]model.Joke{},
 	}
 
-	_, err := s.LoadJokesToStruct()
-	if err != nil {
-		return nil
-	}
-	_, err = s.LoadJokesToMap()
-	if err != nil {
-		return nil
-	}
+	s.LoadJokesToStruct()
+
+	s.LoadJokesToMap()
 
 	return s
 }
 
-//ErrNoMatches
+//Errors
 var ErrNoMatches = errors.New(" No matches")
 var ErrLimitOut = errors.New(" Limit out of range")
 
@@ -59,11 +54,13 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 
 	var result []model.Joke
 
+	text = strings.ToLower(strings.TrimSpace(text))
+
 	for _, v := range s.jokesStruct {
-		v.Title = strings.ToLower(v.Title)
-		v.Body = strings.ToLower(v.Body)
-		text = strings.ToLower(text)
-		if strings.Contains(v.Title, text) || strings.Contains(v.Body, text) {
+		title := strings.ToLower(v.Title)
+		body := strings.ToLower(v.Body)
+
+		if strings.Contains(title, text) || strings.Contains(body, text) {
 			result = append(result, v)
 		}
 	}
@@ -78,8 +75,6 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	err := errors.New(" Load file first")
-
 	sort.SliceStable(s.jokesStruct, func(i, j int) bool {
 		return s.jokesStruct[i].Score > s.jokesStruct[j].Score
 	})
@@ -88,6 +83,7 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	const defaultLimit = 10
 	var v string
 	var a int
+
 	if len(m["limit"]) > 0 {
 		v = m["limit"][0]
 		a, _ = strconv.Atoi(v)
@@ -98,9 +94,6 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 		count = defaultLimit
 	}
 
-	if len(s.jokesStruct) == 0 {
-		return nil, err
-	}
 	if count > len(s.jokesStruct) {
 		return nil, ErrLimitOut
 	}
@@ -108,20 +101,21 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	if res != nil {
 		return res, nil
 	}
-
-	return []model.Joke{}, err
+	err := errors.New(" there are no jokes in the 'funniest' section ")
+	return nil, err
 }
 
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	err := errors.New(" Load file first")
 	var result []model.Joke
+
 	count := 0
 	const defaultLimit = 10
 	var v string
 	var a int
+
 	if len(m["limit"]) > 0 {
 		v = m["limit"][0]
 		a, _ = strconv.Atoi(v)
@@ -131,18 +125,22 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	} else {
 		count = defaultLimit
 	}
+
 	if count > len(s.jokesStruct) {
 		return nil, ErrLimitOut
 	}
+
 	for i := range s.jokesStruct {
 		if i < count { //перебирает до указанного "count"
 			a := s.jokesStruct[rand.Intn(len(s.jokesStruct))]
 			result = append(result, a)
 		}
 	}
+
 	if result != nil {
 		return result, nil
 	}
+	err := errors.New(" there are no jokes in the 'random' section ")
 	return nil, err
 }
 
@@ -159,27 +157,28 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	return j, nil
 }
 
-func (s *Server) LoadJokesToStruct() ([]model.Joke, error) {
+func (s *Server) LoadJokesToStruct() []model.Joke {
 
 	res, err := s.storage.Load()
 	s.jokesStruct = res
 
 	if err != nil {
-		return nil, errors.New(" error opening file")
+		return nil
 	}
-	return s.jokesStruct, nil
+	return s.jokesStruct
 }
 
-func (s *Server) LoadJokesToMap() (map[string]model.Joke, error) {
+func (s *Server) LoadJokesToMap() map[string]model.Joke {
 	s.jokesMap = map[string]model.Joke{}
 	res, err := s.storage.Load()
+
+	if err != nil {
+		return nil
+	}
 
 	for _, j := range res {
 		s.jokesMap[j.ID] = j
 	}
-	if err != nil {
-		return nil, errors.New(" error opening file")
-	}
 
-	return s.jokesMap, nil
+	return s.jokesMap
 }

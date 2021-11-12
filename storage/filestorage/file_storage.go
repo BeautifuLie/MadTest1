@@ -3,10 +3,11 @@ package filestorage
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"program/model"
+
+	"github.com/pkg/errors"
 )
 
 type FileStorage struct {
@@ -26,8 +27,9 @@ func (fs *FileStorage) Load() ([]model.Joke, error) {
 	file, err := os.Open(fs.fileName)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to open a file")
+		panic(err)
 	}
+
 	defer file.Close()
 
 	var result []model.Joke
@@ -42,7 +44,7 @@ func (fs *FileStorage) Load() ([]model.Joke, error) {
 func (fs *FileStorage) Save(jokes []model.Joke) error {
 	structBytes, err := json.MarshalIndent(jokes, "", " ")
 	if err != nil {
-		return fmt.Errorf(" error marshalling JSON:%w:", err)
+		return fmt.Errorf(" error marshalling JSON:%w: ", err)
 	}
 	err = ioutil.WriteFile("db/reddit_jokes.json", structBytes, 0644)
 	if err != nil {
