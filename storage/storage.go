@@ -9,7 +9,6 @@ type Storage interface {
 	Load() ([]model.Joke, error)
 	Save(model.Joke) error
 	FindID(id string) (model.Joke, error)
-
 	Fun() ([]model.Joke, error)
 	TextS(text string) ([]model.Joke, error)
 }

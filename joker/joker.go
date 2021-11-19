@@ -11,22 +11,18 @@ import (
 )
 
 type Server struct {
-	mu          sync.RWMutex
-	storage     storage.Storage
-	jokesStruct []model.Joke
-	jokesMap    map[string]model.Joke
+	mu      sync.RWMutex
+	storage storage.Storage
 }
 
 func NewServer(storage storage.Storage) *Server {
 	s := &Server{
-		storage:     storage,
-		jokesStruct: []model.Joke{},
-		jokesMap:    map[string]model.Joke{},
+		storage: storage,
 	}
-
-	s.LoadJokesToStruct()
-
-	s.LoadJokesToMap()
+	_, err := s.storage.Load()
+	if err != nil {
+		return nil
+	}
 
 	return s
 }
@@ -34,8 +30,6 @@ func NewServer(storage storage.Storage) *Server {
 //Errors
 var ErrNoMatches = errors.New(" No matches")
 var ErrLimitOut = errors.New(" Limit out of range")
-
-//Vars
 
 func (s *Server) ID(id string) (model.Joke, error) {
 	s.mu.RLock()
@@ -51,7 +45,7 @@ func (s *Server) ID(id string) (model.Joke, error) {
 func (s *Server) Text(text string) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	// text = strings.ToLower(strings.TrimSpace(text))
+
 	res, err := s.storage.TextS(text)
 	if err != nil {
 		return []model.Joke{}, err
@@ -61,23 +55,7 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 		return []model.Joke{}, ErrNoMatches
 	}
 	return res, nil
-	// var result []model.Joke
 
-	// text = strings.ToLower(strings.TrimSpace(text))
-
-	// for _, v := range s.jokesStruct {
-	// 	title := strings.ToLower(v.Title)
-	// 	body := strings.ToLower(v.Body)
-
-	// 	if strings.Contains(title, text) || strings.Contains(body, text) {
-	// 		result = append(result, v)
-	// 	}
-	// }
-
-	// if result != nil {
-	// 	return []model.Joke{}, ErrNoMatches
-	// }
-	// return result, nil
 }
 
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
@@ -161,30 +139,4 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	}
 
 	return j, nil
-}
-
-func (s *Server) LoadJokesToStruct() []model.Joke {
-
-	res, err := s.storage.Load()
-	s.jokesStruct = res
-
-	if err != nil {
-		return nil
-	}
-	return s.jokesStruct
-}
-
-func (s *Server) LoadJokesToMap() map[string]model.Joke {
-	s.jokesMap = map[string]model.Joke{}
-	res, err := s.storage.Load()
-
-	if err != nil {
-		return nil
-	}
-
-	for _, j := range res {
-		s.jokesMap[j.ID] = j
-	}
-
-	return s.jokesMap
 }
