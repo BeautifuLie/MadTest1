@@ -54,7 +54,11 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 	// text = strings.ToLower(strings.TrimSpace(text))
 	res, err := s.storage.TextS(text)
 	if err != nil {
-		return nil, ErrNoMatches
+		return []model.Joke{}, err
+	}
+
+	if len(res) == 0 {
+		return []model.Joke{}, ErrNoMatches
 	}
 	return res, nil
 	// var result []model.Joke

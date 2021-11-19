@@ -126,11 +126,11 @@ func (ms *MongoStorage) TextS(text string) ([]model.Joke, error) {
 
 	// filter := bson.D{{"$text", bson.D{{"$search", text}}}} //for indexModel
 
+	cur.All(ctx, &j)
 	if err != nil {
+
 		return []model.Joke{}, err
 	}
-
-	cur.All(ctx, &j)
 	return j, nil
 
 }
