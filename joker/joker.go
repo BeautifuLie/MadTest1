@@ -43,7 +43,7 @@ func (s *Server) ID(id string) (model.Joke, error) {
 
 	res, err := s.storage.FindID(id)
 	if err != nil {
-		return model.Joke{}, err
+		return model.Joke{}, ErrNoMatches
 	}
 	return res, nil
 }
@@ -51,9 +51,10 @@ func (s *Server) ID(id string) (model.Joke, error) {
 func (s *Server) Text(text string) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	// text = strings.ToLower(strings.TrimSpace(text))
 	res, err := s.storage.TextS(text)
 	if err != nil {
-		return nil, err
+		return nil, ErrNoMatches
 	}
 	return res, nil
 	// var result []model.Joke
