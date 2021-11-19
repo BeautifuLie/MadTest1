@@ -10,9 +10,11 @@ import (
 
 func main() {
 
-	fileName := filestorage.NewFileStorage("db/reddit_jokes.json")
+	// fileName := filestorage.NewFileStorage("db/reddit_jokes.json")
 
-	server := joker.NewServer(fileName)
+	mongoStorage := filestorage.NewMongoStorage("mongodb://localhost:27017")
+
+	server := joker.NewServer(mongoStorage)
 
 	myRouter := handlers.HandleRequest(handlers.RetHandler(server))
 
