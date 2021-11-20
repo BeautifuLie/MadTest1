@@ -19,10 +19,6 @@ func NewServer(storage storage.Storage) *Server {
 	s := &Server{
 		storage: storage,
 	}
-	_, err := s.storage.Load()
-	if err != nil {
-		return nil
-	}
 
 	return s
 }
@@ -37,7 +33,8 @@ func (s *Server) ID(id string) (model.Joke, error) {
 
 	res, err := s.storage.FindID(id)
 	if err != nil {
-		return model.Joke{}, ErrNoMatches
+
+		return model.Joke{}, err
 	}
 	return res, nil
 }
@@ -93,7 +90,9 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	res, err := s.storage.Load()
+
+	res, err := s.storage.Random()
+
 	var result []model.Joke
 
 	count := 0

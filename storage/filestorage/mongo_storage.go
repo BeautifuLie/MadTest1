@@ -2,16 +2,20 @@ package filestorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"program/model"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// func init() {
+// 	ms.RegisterIndexes()
+// }
 
 type MongoStorage struct {
 	client     *mongo.Client
@@ -28,32 +32,37 @@ func NewMongoStorage(connectURI string) *MongoStorage {
 	}
 	db := client.Database("mongoData")
 
-	return &MongoStorage{
+	ms := &MongoStorage{
 		client:     client,
 		collection: db.Collection("Jokes"),
 	}
 
+	model := mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "title", Value: "text"},
+			{Key: "body", Value: "text"},
+		},
+	}
+	_, err = ms.collection.Indexes().CreateOne(context.TODO(), model)
+	if err != nil {
+		panic(err)
+	}
+
+	return ms
 }
 
-func (ms *MongoStorage) Load() ([]model.Joke, error) {
+func (ms *MongoStorage) RegisterIndexes() {
+
+}
+
+func (ms *MongoStorage) Random() ([]model.Joke, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var jokes []model.Joke
 
-	// model := []mongo.IndexModel{
-	// 	{
-	// 		Keys: bson.D{{"title", "text"}},
-	// 	},
-	// 	{
-	// 		Keys: bson.D{{"body", 1}},
-	// 	},
-	// }
-	// _, err := ms.collection.Indexes().CreateMany(context.TODO(), model)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	res, err := ms.collection.Find(ctx, bson.D{})
+	opts := options.Find()
+	opts.SetLimit(50)
+	res, err := ms.collection.Find(ctx, bson.D{}, opts)
 	if err != nil {
 		return nil, fmt.Errorf(" failed to fetch jokes:%w", err)
 	}
@@ -80,11 +89,17 @@ func (ms *MongoStorage) FindID(id string) (model.Joke, error) {
 	defer cancel()
 	var j model.Joke
 
-	err := ms.collection.FindOne(ctx, bson.M{"id": id}).Decode(&j)
-	if err != nil {
-		return model.Joke{}, err
+	result := ms.collection.FindOne(ctx, bson.M{"id": id})
+	if result.Err() != nil {
+		if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			return model.Joke{}, mongo.ErrNoDocuments
+		}
+		return model.Joke{}, fmt.Errorf("failed to execute query,error:%w", result.Err())
 	}
 
+	if err := result.Decode(&j); err != nil {
+		return j, fmt.Errorf(" failed to decode document,error:%w", err)
+	}
 	return j, nil
 
 }
@@ -97,6 +112,7 @@ func (ms *MongoStorage) Fun() ([]model.Joke, error) {
 
 	opts := options.Find()
 	opts.SetSort(bson.D{{Key: "score", Value: -1}})
+	opts.SetLimit(100)
 	sortCursor, err := ms.collection.Find(ctx, bson.D{}, opts)
 	if err != nil {
 		log.Fatal(err)
@@ -114,21 +130,19 @@ func (ms *MongoStorage) TextS(text string) ([]model.Joke, error) {
 	defer cancel()
 	var j []model.Joke
 
-	filter := bson.D{
+	// filter := bson.D{		//search without indexes
+	// 	{"$or", bson.A{
+	// 		bson.D{{"body", primitive.Regex{Pattern: text, Options: "i"}}},
+	// 		bson.D{{"title", primitive.Regex{Pattern: text, Options: "i"}}},
+	// 	}},
+	// }
 
-		{"$or", bson.A{
-			bson.D{{"body", primitive.Regex{Pattern: text, Options: "i"}}},
-			bson.D{{"title", primitive.Regex{Pattern: text, Options: "i"}}},
-		}},
-	}
+	filter := bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: text}}}} //for indexModel
 
 	cur, err := ms.collection.Find(ctx, filter)
 
-	// filter := bson.D{{"$text", bson.D{{"$search", text}}}} //for indexModel
-
 	cur.All(ctx, &j)
 	if err != nil {
-
 		return []model.Joke{}, err
 	}
 	return j, nil

@@ -69,7 +69,9 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(&res)
+
+	err = json.NewEncoder(w).Encode(res)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -146,7 +148,7 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(&res)
+	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -170,3 +172,19 @@ func respondError(err error, w http.ResponseWriter) {
 	}
 
 }
+
+// func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
+// 	response, err := json.Marshal(payload)
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		w.Write([]byte(err.Error()))
+// 		return
+// 	}
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.WriteHeader(status)
+// 	w.Write([]byte(response))
+
+// 	enc := json.NewEncoder(w)
+// 	enc.SetIndent("", "\t")
+// 	err = enc.Encode(&res)
+// }
