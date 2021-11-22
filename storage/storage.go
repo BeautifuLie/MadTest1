@@ -11,4 +11,5 @@ type Storage interface {
 	FindID(id string) (model.Joke, error)
 	Fun() ([]model.Joke, error)
 	TextS(text string) ([]model.Joke, error)
+	UpdateByID(text []byte, id string) error
 }

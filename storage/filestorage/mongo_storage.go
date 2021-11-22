@@ -22,14 +22,20 @@ type MongoStorage struct {
 	collection *mongo.Collection
 }
 
-func NewMongoStorage(connectURI string) *MongoStorage {
+func NewMongoStorage(connectURI string) (*MongoStorage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectURI))
 	if err != nil {
-		log.Fatalf("Error while connecting to mongo: %v\n", err)
+		// log.Fatalf("Error while connecting to mongo: %v\n", err)
+		return nil, fmt.Errorf(" error while connecting to mongo: %v", err)
 	}
+
+	if err = client.Ping(ctx, nil); err != nil {
+		return nil, fmt.Errorf("pinging mongo: %w", err)
+	}
+
 	db := client.Database("mongoData")
 
 	ms := &MongoStorage{
@@ -48,7 +54,7 @@ func NewMongoStorage(connectURI string) *MongoStorage {
 		panic(err)
 	}
 
-	return ms
+	return ms, nil
 }
 
 func (ms *MongoStorage) RegisterIndexes() {
@@ -140,11 +146,26 @@ func (ms *MongoStorage) TextS(text string) ([]model.Joke, error) {
 	filter := bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: text}}}} //for indexModel
 
 	cur, err := ms.collection.Find(ctx, filter)
+	if err != nil {
+		return []model.Joke{}, err
+	}
 
-	cur.All(ctx, &j)
+	err = cur.All(ctx, &j)
 	if err != nil {
 		return []model.Joke{}, err
 	}
 	return j, nil
 
+}
+
+func (ms *MongoStorage) UpdateByID(text []byte, id string) error {
+	filter := bson.D{{Key: "id", Value: id}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "body", Value: text}}}}
+	_, err := ms.collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+
+		return err
+	}
+
+	return nil
 }

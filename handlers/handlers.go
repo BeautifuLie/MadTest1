@@ -31,6 +31,7 @@ func HandleRequest(h *apiHandler) *mux.Router {
 	myRouter.HandleFunc("/jokes/funniest", h.GetFunniestJokes).Methods(http.MethodGet)
 	myRouter.HandleFunc("/jokes/random", h.GetRandomJoke).Methods(http.MethodGet)
 	myRouter.HandleFunc("/jokes", h.AddJoke).Methods(http.MethodPost)
+	myRouter.HandleFunc("/jokes/{id}", h.UpdateJoke).Methods(http.MethodPut)
 	myRouter.HandleFunc("/jokes/{id}", h.GetJokeByID).Methods(http.MethodGet)
 	myRouter.HandleFunc("/jokes/search/{text}", h.GetJokeByText).Methods(http.MethodGet)
 
@@ -152,6 +153,36 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+}
+
+func (h *apiHandler) UpdateJoke(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var j model.Joke
+
+	err := json.NewDecoder(io.LimitReader(r.Body, 4*1024)).Decode(&j)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(j.Body) == 0 {
+
+		http.Error(w, "Body is empty", http.StatusBadRequest)
+
+		return
+
+	}
+	err = h.Server.Update(j, id)
+	if err != nil {
+		respondError(err, w)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
 }
 
 type serverError struct {

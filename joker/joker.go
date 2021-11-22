@@ -139,3 +139,12 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 
 	return j, nil
 }
+
+func (s *Server) Update(j model.Joke, id string) error {
+
+	err := s.storage.UpdateByID([]byte(j.Body), id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
