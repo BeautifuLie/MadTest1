@@ -2,14 +2,18 @@ package storage
 
 import (
 	"program/model"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	// "github.com/golang/mock/mockgen/model"
 )
 
-////go:generate  go run github.com/golang/mock/mockgen -package mocks -destination=./mock_storage.go -source=../storage/storage.go
+//go:generate  go run github.com/golang/mock/mockgen -source storage.go -destination mocks/mock_storage.go -package mocks
+
 type Storage interface {
-	Random() ([]model.Joke, error)
-	Save(model.Joke) error
 	FindID(id string) (model.Joke, error)
 	Fun() ([]model.Joke, error)
-	TextS(text string) ([]model.Joke, error)
-	UpdateByID(text []byte, id string) error
+	Random() ([]model.Joke, error)
+	TextSearch(text string) ([]model.Joke, error)
+	Save(model.Joke) error
+	UpdateByID(text string, id string) (*mongo.UpdateResult, error)
 }

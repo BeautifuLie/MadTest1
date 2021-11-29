@@ -13,10 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// func init() {
-// 	ms.RegisterIndexes()
-// }
-
 type MongoStorage struct {
 	client     *mongo.Client
 	collection *mongo.Collection
@@ -28,7 +24,6 @@ func NewMongoStorage(connectURI string) (*MongoStorage, error) {
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectURI))
 	if err != nil {
-		// log.Fatalf("Error while connecting to mongo: %v\n", err)
 		return nil, fmt.Errorf(" error while connecting to mongo: %v", err)
 	}
 
@@ -43,53 +38,24 @@ func NewMongoStorage(connectURI string) (*MongoStorage, error) {
 		collection: db.Collection("Jokes"),
 	}
 
-	model := mongo.IndexModel{
-		Keys: bson.D{
-			{Key: "title", Value: "text"},
-			{Key: "body", Value: "text"},
+	model := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "title", Value: "text"},
+				{Key: "body", Value: "text"},
+			}},
+		{
+			Keys: bson.D{
+				{Key: "score", Value: -1}},
 		},
 	}
-	_, err = ms.collection.Indexes().CreateOne(context.TODO(), model)
+	_, err = ms.collection.Indexes().CreateMany(context.TODO(), model)
 	if err != nil {
 		panic(err)
 	}
 
 	return ms, nil
 }
-
-func (ms *MongoStorage) RegisterIndexes() {
-
-}
-
-func (ms *MongoStorage) Random() ([]model.Joke, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	var jokes []model.Joke
-
-	opts := options.Find()
-	opts.SetLimit(50)
-	res, err := ms.collection.Find(ctx, bson.D{}, opts)
-	if err != nil {
-		return nil, fmt.Errorf(" failed to fetch jokes:%w", err)
-	}
-	err = res.All(ctx, &jokes)
-	if err != nil {
-		panic(err)
-	}
-
-	return jokes, nil
-}
-
-func (ms *MongoStorage) Save(j model.Joke) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	_, err := ms.collection.InsertOne(ctx, j)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (ms *MongoStorage) FindID(id string) (model.Joke, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -118,7 +84,7 @@ func (ms *MongoStorage) Fun() ([]model.Joke, error) {
 
 	opts := options.Find()
 	opts.SetSort(bson.D{{Key: "score", Value: -1}})
-	opts.SetLimit(100)
+
 	sortCursor, err := ms.collection.Find(ctx, bson.D{}, opts)
 	if err != nil {
 		log.Fatal(err)
@@ -131,7 +97,25 @@ func (ms *MongoStorage) Fun() ([]model.Joke, error) {
 	return j, nil
 }
 
-func (ms *MongoStorage) TextS(text string) ([]model.Joke, error) {
+func (ms *MongoStorage) Random() ([]model.Joke, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var jokes []model.Joke
+
+	res, err := ms.collection.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, fmt.Errorf(" failed to fetch jokes:%w", err)
+	}
+	err = res.All(ctx, &jokes)
+	if err != nil {
+		panic(err)
+	}
+
+	return jokes, nil
+}
+
+func (ms *MongoStorage) TextSearch(text string) ([]model.Joke, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var j []model.Joke
@@ -158,14 +142,24 @@ func (ms *MongoStorage) TextS(text string) ([]model.Joke, error) {
 
 }
 
-func (ms *MongoStorage) UpdateByID(text []byte, id string) error {
-	filter := bson.D{{Key: "id", Value: id}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "body", Value: text}}}}
-	_, err := ms.collection.UpdateOne(context.TODO(), filter, update)
+func (ms *MongoStorage) Save(j model.Joke) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := ms.collection.InsertOne(ctx, j)
 	if err != nil {
-
 		return err
 	}
-
 	return nil
+}
+
+func (ms *MongoStorage) UpdateByID(text string, id string) (*mongo.UpdateResult, error) {
+	filter := bson.D{{Key: "id", Value: id}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "body", Value: text}}}}
+	res, err := ms.collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+
+		return nil, err
+	}
+
+	return res, nil
 }
