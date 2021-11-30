@@ -12,7 +12,10 @@ func main() {
 
 	// fileName := filestorage.NewFileStorage("db/reddit_jokes.json")
 
-	mongoStorage := filestorage.NewMongoStorage("mongodb://localhost:27017")
+	mongoStorage, err := filestorage.NewMongoStorage("mongodb://localhost:27017")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	server := joker.NewServer(mongoStorage)
 

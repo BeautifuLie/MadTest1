@@ -2,6 +2,7 @@ package joker
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/url"
 	"program/model"
@@ -11,22 +12,14 @@ import (
 )
 
 type Server struct {
-	mu          sync.RWMutex
-	storage     storage.Storage
-	jokesStruct []model.Joke
-	jokesMap    map[string]model.Joke
+	mu      sync.RWMutex
+	storage storage.Storage
 }
 
 func NewServer(storage storage.Storage) *Server {
 	s := &Server{
-		storage:     storage,
-		jokesStruct: []model.Joke{},
-		jokesMap:    map[string]model.Joke{},
+		storage: storage,
 	}
-
-	s.LoadJokesToStruct()
-
-	s.LoadJokesToMap()
 
 	return s
 }
@@ -35,44 +28,16 @@ func NewServer(storage storage.Storage) *Server {
 var ErrNoMatches = errors.New(" No matches")
 var ErrLimitOut = errors.New(" Limit out of range")
 
-//Vars
-
 func (s *Server) ID(id string) (model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	res, err := s.storage.FindID(id)
 	if err != nil {
+
 		return model.Joke{}, err
 	}
 	return res, nil
-}
-
-func (s *Server) Text(text string) ([]model.Joke, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	res, err := s.storage.TextS(text)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-	// var result []model.Joke
-
-	// text = strings.ToLower(strings.TrimSpace(text))
-
-	// for _, v := range s.jokesStruct {
-	// 	title := strings.ToLower(v.Title)
-	// 	body := strings.ToLower(v.Body)
-
-	// 	if strings.Contains(title, text) || strings.Contains(body, text) {
-	// 		result = append(result, v)
-	// 	}
-	// }
-
-	// if result != nil {
-	// 	return []model.Joke{}, ErrNoMatches
-	// }
-	// return result, nil
 }
 
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
@@ -110,7 +75,9 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	res, err := s.storage.Load()
+
+	res, err := s.storage.Random()
+
 	var result []model.Joke
 
 	count := 0
@@ -146,6 +113,22 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	return nil, err
 }
 
+func (s *Server) Text(text string) ([]model.Joke, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	res, err := s.storage.TextSearch(text)
+	if err != nil {
+		return []model.Joke{}, err
+	}
+
+	if len(res) == 0 {
+		return []model.Joke{}, ErrNoMatches
+	}
+	return res, nil
+
+}
+
 func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -158,28 +141,13 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	return j, nil
 }
 
-func (s *Server) LoadJokesToStruct() []model.Joke {
-
-	res, err := s.storage.Load()
-	s.jokesStruct = res
-
+func (s *Server) Update(j model.Joke, id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	res, err := s.storage.UpdateByID(j.Body, id)
 	if err != nil {
-		return nil
+		return err
 	}
-	return s.jokesStruct
-}
-
-func (s *Server) LoadJokesToMap() map[string]model.Joke {
-	s.jokesMap = map[string]model.Joke{}
-	res, err := s.storage.Load()
-
-	if err != nil {
-		return nil
-	}
-
-	for _, j := range res {
-		s.jokesMap[j.ID] = j
-	}
-
-	return s.jokesMap
+	fmt.Print(res)
+	return nil
 }
