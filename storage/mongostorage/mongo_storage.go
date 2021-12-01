@@ -1,8 +1,7 @@
-package filestorage
+package mongostorage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"program/model"
@@ -51,7 +50,7 @@ func NewMongoStorage(connectURI string) (*MongoStorage, error) {
 	}
 	_, err = ms.collection.Indexes().CreateMany(context.TODO(), model)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return ms, nil
@@ -61,17 +60,14 @@ func (ms *MongoStorage) FindID(id string) (model.Joke, error) {
 	defer cancel()
 	var j model.Joke
 
-	result := ms.collection.FindOne(ctx, bson.M{"id": id})
-	if result.Err() != nil {
-		if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+	err := ms.collection.FindOne(ctx, bson.M{"id": id}).Decode(&j)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
 			return model.Joke{}, mongo.ErrNoDocuments
 		}
-		return model.Joke{}, fmt.Errorf("failed to execute query,error:%w", result.Err())
+		return model.Joke{}, fmt.Errorf("failed to execute query,error:%w", err)
 	}
 
-	if err := result.Decode(&j); err != nil {
-		return j, fmt.Errorf(" failed to decode document,error:%w", err)
-	}
 	return j, nil
 
 }
@@ -85,13 +81,13 @@ func (ms *MongoStorage) Fun() ([]model.Joke, error) {
 	opts := options.Find()
 	opts.SetSort(bson.D{{Key: "score", Value: -1}})
 
-	sortCursor, err := ms.collection.Find(ctx, bson.D{}, opts)
+	result, err := ms.collection.Find(ctx, bson.D{}, opts)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	if err = sortCursor.All(ctx, &j); err != nil {
-		return []model.Joke{}, err
+	if err = result.All(ctx, &j); err != nil {
+		return nil, err
 	}
 
 	return j, nil
@@ -101,18 +97,18 @@ func (ms *MongoStorage) Random() ([]model.Joke, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var jokes []model.Joke
+	var j []model.Joke
 
-	res, err := ms.collection.Find(ctx, bson.D{})
+	result, err := ms.collection.Find(ctx, bson.D{})
 	if err != nil {
-		return nil, fmt.Errorf(" failed to fetch jokes:%w", err)
-	}
-	err = res.All(ctx, &jokes)
-	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return jokes, nil
+	if err = result.All(ctx, &j); err != nil {
+		return nil, err
+	}
+
+	return j, nil
 }
 
 func (ms *MongoStorage) TextSearch(text string) ([]model.Joke, error) {
@@ -129,15 +125,17 @@ func (ms *MongoStorage) TextSearch(text string) ([]model.Joke, error) {
 
 	filter := bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: text}}}} //for indexModel
 
-	cur, err := ms.collection.Find(ctx, filter)
+	result, err := ms.collection.Find(ctx, filter)
 	if err != nil {
-		return []model.Joke{}, err
+		return nil, err
 	}
 
-	err = cur.All(ctx, &j)
-	if err != nil {
-		return []model.Joke{}, err
+	if err = result.All(ctx, &j); err != nil {
+		return nil, err
+	} else if len(j) == 0 {
+		return nil, mongo.ErrNoDocuments
 	}
+
 	return j, nil
 
 }
@@ -153,13 +151,29 @@ func (ms *MongoStorage) Save(j model.Joke) error {
 }
 
 func (ms *MongoStorage) UpdateByID(text string, id string) (*mongo.UpdateResult, error) {
+
+	opts := options.Update().SetUpsert(false)
 	filter := bson.D{{Key: "id", Value: id}}
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: "body", Value: text}}}}
-	res, err := ms.collection.UpdateOne(context.TODO(), filter, update)
-	if err != nil {
 
+	res, err := ms.collection.UpdateOne(context.TODO(), filter, update, opts)
+	if err != nil {
 		return nil, err
 	}
 
 	return res, nil
+}
+
+func (ms *MongoStorage) CloseClientDB() {
+
+	if ms.client == nil {
+		return
+	}
+
+	err := ms.client.Disconnect(context.TODO())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Connection to MongoDB closed.")
 }
