@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"program/joker"
@@ -13,6 +12,7 @@ import (
 	"program/storage"
 
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type apiHandler struct {
@@ -65,7 +65,7 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	m, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Info("error while parsing query:", err)
 	}
 
 	res, err1 := h.Server.Funniest(m)
@@ -86,7 +86,7 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 
 	m, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		log.Fatal(err, "Error parsing query")
+		zap.S().Info("error while parsing query:", err)
 	}
 
 	res, err1 := h.Server.Random(m)

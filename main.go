@@ -2,22 +2,28 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"program/handlers"
 	"program/joker"
+	"program/logging"
 	"program/storage/mongostorage"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func main() {
+	loggerMgr := logging.InitZapLog()
+	zap.ReplaceGlobals(loggerMgr)
+	defer loggerMgr.Sync()
+	logger := loggerMgr.Sugar()
 
 	mongoStorage, err := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Errorw("Error during connect...", err)
 	}
 
 	server := joker.NewServer(mongoStorage)
@@ -39,8 +45,8 @@ func main() {
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
 	sig := <-signalCh
-	log.Println("got signal:", sig)
 
+	logger.Infof("got signal:%", sig)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -48,6 +54,6 @@ func main() {
 
 	mongoStorage.CloseClientDB()
 
-	log.Fatal("shutdown...")
+	logger.Info("Shutdown...")
 
 }

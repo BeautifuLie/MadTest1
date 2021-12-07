@@ -3,13 +3,13 @@ package mongostorage
 import (
 	"context"
 	"fmt"
-	"log"
 	"program/model"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 type MongoStorage struct {
@@ -23,6 +23,7 @@ func NewMongoStorage(connectURI string) (*MongoStorage, error) {
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectURI))
 	if err != nil {
+
 		return nil, fmt.Errorf(" error while connecting to mongo: %v", err)
 	}
 
@@ -133,6 +134,7 @@ func (ms *MongoStorage) TextSearch(text string) ([]model.Joke, error) {
 	if err = result.All(ctx, &j); err != nil {
 		return nil, err
 	} else if len(j) == 0 {
+
 		return nil, mongo.ErrNoDocuments
 	}
 
@@ -172,8 +174,8 @@ func (ms *MongoStorage) CloseClientDB() {
 
 	err := ms.client.Disconnect(context.TODO())
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Error(err)
 	}
+	zap.S().Info("Connection to MongoDB closed.")
 
-	log.Println("Connection to MongoDB closed.")
 }
