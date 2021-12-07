@@ -1,14 +1,16 @@
-package filestorage
+package mongostorage_test
 
 import (
 	"program/model"
+	"program/storage/mongostorage"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var ms, _ = NewMongoStorage("mongodb://localhost:27017")
+var ms, _ = mongostorage.NewMongoStorage("mongodb://localhost:27017")
 
 func TestFindID(t *testing.T) {
 
@@ -40,23 +42,23 @@ func TestTextS(t *testing.T) {
 	var s = "porcupinetree"
 
 	_, err := ms.TextSearch(s)
-	assert.Equal(t, err, nil)
+	require.Error(t, err)
 
 }
 
 func TestUpdateByID(t *testing.T) {
 
 	var j = model.Joke{
-		Body: "updaaat4e",
+		Body: "updaaat4e v.5",
 		ID:   "124124",
 	}
 
-	res, _ := ms.UpdateByID(j.Body, j.ID)
-
+	res, err := ms.UpdateByID(j.Body, j.ID)
+	require.NoError(t, err)
 	assert.Equal(t, res.ModifiedCount, int64(1))
 
 	var j2 = model.Joke{
-		Body: "upd v.6",
+		Body: "upd v.7",
 		ID:   "124fagawg",
 	}
 

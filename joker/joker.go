@@ -2,17 +2,14 @@ package joker
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
 	"net/url"
 	"program/model"
 	"program/storage"
 	"strconv"
-	"sync"
 )
 
 type Server struct {
-	mu      sync.RWMutex
 	storage storage.Storage
 }
 
@@ -24,27 +21,18 @@ func NewServer(storage storage.Storage) *Server {
 	return s
 }
 
-//Errors
-var ErrNoMatches = errors.New(" No matches")
-var ErrLimitOut = errors.New(" Limit out of range")
-
 func (s *Server) ID(id string) (model.Joke, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 
-	res, err := s.storage.FindID(id)
+	result, err := s.storage.FindID(id)
 	if err != nil {
-
-		return model.Joke{}, err
+		return model.Joke{}, storage.ErrNoMatches
 	}
-	return res, nil
+	return result, nil
 }
 
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 
-	res, err := s.storage.Fun()
+	result, err := s.storage.Fun()
 
 	count := 0
 	const defaultLimit = 10
@@ -61,10 +49,12 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 		count = defaultLimit
 	}
 
-	if count > len(res) {
-		return nil, ErrLimitOut
+	if len(result) == 0 {
+		return nil, storage.ErrNoJokes
+	} else if count > len(result) {
+		return nil, storage.ErrLimitOut
 	}
-	lim := res[:count]
+	lim := result[:count]
 	if lim != nil {
 		return lim, nil
 	}
@@ -73,8 +63,6 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 }
 
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 
 	res, err := s.storage.Random()
 
@@ -95,8 +83,10 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 		count = defaultLimit
 	}
 
-	if count > len(res) {
-		return nil, ErrLimitOut
+	if len(res) == 0 {
+		return nil, storage.ErrNoJokes
+	} else if count > len(res) {
+		return nil, storage.ErrLimitOut
 	}
 
 	for i := range res {
@@ -114,24 +104,17 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 }
 
 func (s *Server) Text(text string) ([]model.Joke, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 
-	res, err := s.storage.TextSearch(text)
+	result, err := s.storage.TextSearch(text)
 	if err != nil {
-		return []model.Joke{}, err
+		return []model.Joke{}, storage.ErrNoMatches
 	}
 
-	if len(res) == 0 {
-		return []model.Joke{}, ErrNoMatches
-	}
-	return res, nil
+	return result, nil
 
 }
 
 func (s *Server) Add(j model.Joke) (model.Joke, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	err := s.storage.Save(j)
 	if err != nil {
@@ -141,13 +124,16 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	return j, nil
 }
 
-func (s *Server) Update(j model.Joke, id string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	res, err := s.storage.UpdateByID(j.Body, id)
+func (s *Server) Update(j model.Joke, id string) (model.Joke, error) {
+
+	_, err := s.storage.UpdateByID(j.Body, id)
 	if err != nil {
-		return err
+		return model.Joke{}, err
 	}
-	fmt.Print(res)
-	return nil
+	updated, err := s.ID(id)
+	if err != nil {
+		return model.Joke{}, storage.ErrNoJokes
+	}
+
+	return updated, nil
 }

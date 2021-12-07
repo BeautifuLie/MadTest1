@@ -1,4 +1,4 @@
-package main
+package handlers_test
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"program/handlers"
 	"program/joker"
 	"program/model"
-	"program/storage/filestorage"
+	"program/storage/mongostorage"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -17,13 +17,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetFunniest(t *testing.T) {
+func TestGetJokeByID(t *testing.T) {
+
+	request := httptest.NewRequest(http.MethodGet,
+		"/jokes/{id}", nil)
+	request = mux.SetURLVars(request, map[string]string{"id": "4xjyho1"})
+	responseRecorder := httptest.NewRecorder()
+
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
+	s := joker.NewServer(mongoStorage)
+	h := handlers.RetHandler(s)
+	handlers.HandleRequest(h)
+
+	h.GetJokeByID(responseRecorder, request)
+	assert.Equal(t, 404, responseRecorder.Code)
+
+}
+func TestGetFunniestJokes(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
 		fmt.Sprintf("/jokes/funniest?limit=%v", 3), nil)
 	responseRecorder := httptest.NewRecorder()
 
-	mongoStorage := filestorage.NewMongoStorage("mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 
 	s := joker.NewServer(mongoStorage)
 
@@ -41,36 +57,46 @@ func TestGetFunniest(t *testing.T) {
 
 	require.Equal(t, 3, len(j))
 
-	// j1 := j[0]
-	// assert.Equal(t, "On the condition he gets to "+
-	// 	"install windows.\n\n\n", j1.Body)
+	j1 := j[0]
+	assert.Equal(t, "On the condition he gets to "+
+		"install windows.\n\n\n", j1.Body)
 }
-
-func TestFindById(t *testing.T) {
+func TestGetRandomJoke(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
-		"/jokes/{id}", nil)
-	request = mux.SetURLVars(request, map[string]string{"id": "4xjyho1"})
-	responseRecorder := httptest.NewRecorder()
+		"/jokes/random", nil)
+	rr := httptest.NewRecorder()
 
-	mongoStorage := filestorage.NewMongoStorage("mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s := joker.NewServer(mongoStorage)
 	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
+	h.GetRandomJoke(rr, request)
 
-	h.GetJokeByID(responseRecorder, request)
-	assert.Equal(t, 404, responseRecorder.Code)
+	///////////////////////////////////////////////////
+
+	request1 := httptest.NewRequest(http.MethodGet,
+		"/jokes/random", nil)
+	rr1 := httptest.NewRecorder()
+
+	mongoStorage1, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
+	s1 := joker.NewServer(mongoStorage1)
+	h1 := handlers.RetHandler(s1)
+	handlers.HandleRequest(h1)
+	h.GetRandomJoke(rr1, request1)
+
+	assert.NotEqual(t, rr, rr1)
 
 }
 
-func TestFindByText(t *testing.T) {
+func TestGetJokeByText(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
 		"/jokes/search/{text}", nil)
 	request = mux.SetURLVars(request, map[string]string{"text": "porcupinetree"})
 	responseRecorder := httptest.NewRecorder()
 
-	mongoStorage := filestorage.NewMongoStorage("mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s := joker.NewServer(mongoStorage)
 	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
@@ -90,40 +116,12 @@ func TestAddJoke(t *testing.T) {
 
 	responseRecorder := httptest.NewRecorder()
 
-	mongoStorage := filestorage.NewMongoStorage("mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s := joker.NewServer(mongoStorage)
 	h := handlers.RetHandler(s)
 	handlers.HandleRequest(h)
 
 	h.AddJoke(responseRecorder, request)
 	assert.Equal(t, 201, responseRecorder.Code)
-
-}
-
-func TestRandom(t *testing.T) {
-
-	request := httptest.NewRequest(http.MethodGet,
-		"/jokes/random", nil)
-	rr := httptest.NewRecorder()
-
-	mongoStorage := filestorage.NewMongoStorage("mongodb://localhost:27017")
-	s := joker.NewServer(mongoStorage)
-	h := handlers.RetHandler(s)
-	handlers.HandleRequest(h)
-	h.GetRandomJoke(rr, request)
-
-	///////////////////////////////////////////////////
-
-	request1 := httptest.NewRequest(http.MethodGet,
-		"/jokes/random", nil)
-	rr1 := httptest.NewRecorder()
-
-	mongoStorage1 := filestorage.NewMongoStorage("mongodb://localhost:27017")
-	s1 := joker.NewServer(mongoStorage1)
-	h1 := handlers.RetHandler(s1)
-	handlers.HandleRequest(h1)
-	h.GetRandomJoke(rr1, request1)
-
-	assert.NotEqual(t, rr, rr1)
 
 }

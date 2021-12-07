@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"program/joker"
 	"program/model"
+	"program/storage"
 
 	"github.com/gorilla/mux"
 )
@@ -59,28 +60,10 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
-	text := vars["text"]
-	res, err := h.Server.Text(text)
-	if err != nil {
-		respondError(err, w)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	err = json.NewEncoder(w).Encode(res)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
 func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 
 	m, err := url.ParseQuery(r.URL.RawQuery)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,7 +101,24 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
+func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 
+	vars := mux.Vars(r)
+	text := vars["text"]
+	res, err := h.Server.Text(text)
+	if err != nil {
+		respondError(err, w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	err = json.NewEncoder(w).Encode(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
 func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 
 	var j model.Joke
@@ -169,19 +169,22 @@ func (h *apiHandler) UpdateJoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(j.Body) == 0 {
-
 		http.Error(w, "Body is empty", http.StatusBadRequest)
-
 		return
 
 	}
-	err = h.Server.Update(j, id)
+
+	res, err := h.Server.Update(j, id)
 	if err != nil {
 		respondError(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 
 }
 
@@ -191,11 +194,14 @@ type serverError struct {
 }
 
 func respondError(err error, w http.ResponseWriter) {
-	if errors.Is(err, joker.ErrNoMatches) {
+	if errors.Is(err, storage.ErrNoMatches) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
-	} else if errors.Is(err, joker.ErrLimitOut) {
+	} else if errors.Is(err, storage.ErrLimitOut) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} else if errors.Is(err, storage.ErrNoJokes) {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
