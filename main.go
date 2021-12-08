@@ -35,7 +35,10 @@ func main() {
 	}
 
 	go func() {
-		s.ListenAndServe()
+		err := s.ListenAndServe()
+		if err != nil {
+			logger.Info(err)
+		}
 	}()
 
 	signalCh := make(chan os.Signal, 1)
@@ -47,7 +50,10 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	s.Shutdown(ctx)
+	err = s.Shutdown(ctx)
+	if err != nil {
+		logger.Error(err)
+	}
 
 	mongoStorage.CloseClientDB()
 

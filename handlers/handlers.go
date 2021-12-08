@@ -47,7 +47,10 @@ func LoggingMiddleware(logger *zap.SugaredLogger) mux.MiddlewareFunc {
 			)
 
 			w.WriteHeader(rr.Code)
-			rr.Body.WriteTo(w)
+			_, err := rr.Body.WriteTo(w)
+			if err != nil {
+				logger.Error(err)
+			}
 		})
 	})
 
@@ -78,9 +81,9 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 	res, err := h.Server.ID(id)
 
 	if err != nil {
-		h.logger.Errorw("GetJokeByID error",
+		h.logger.Info("GetJokeByID ",
 			"error", err,
-			"id", id)
+			" id:", id)
 		h.respondError(err, w, r)
 		return
 	}
@@ -88,7 +91,7 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
-		h.logger.Errorw("GetJokeByID encoding error",
+		h.logger.Errorw("GetJokeByID encoding error ",
 			"error", err,
 			"id", id)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -100,14 +103,14 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	m, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		h.logger.Errorw("GetFunniest query error",
+		h.logger.Error("GetFunniest query error",
 			"error", err)
 	}
 
 	res, err := h.Server.Funniest(m)
 
 	if err != nil {
-		h.logger.Errorw("GetFunniest error",
+		h.logger.Error("GetFunniest ",
 			"error", err)
 		h.respondError(err, w, r)
 		return
@@ -116,7 +119,7 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
-		h.logger.Errorw("GetFunniest encoding error",
+		h.logger.Error("GetFunniest encoding error ",
 			"error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -196,6 +199,8 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 				"text", r.Body)
 			http.Error(w, "error saving file", http.StatusInternalServerError)
 		}
+		h.logger.Error("AddJoke error ",
+			"validation error", err)
 		return
 	}
 	res, err1 := h.Server.Add(j)
@@ -234,9 +239,7 @@ func (h *apiHandler) UpdateJoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(j.Body) == 0 {
-		h.logger.Errorw("UpdateJoke empty field error",
-			"error", err,
-		)
+		h.logger.Error("UpdateJoke: Body is empty error")
 		http.Error(w, "Body is empty", http.StatusBadRequest)
 		return
 
