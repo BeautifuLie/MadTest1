@@ -7,14 +7,18 @@ import (
 	"program/model"
 	"program/storage"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
 type Server struct {
+	logger  *zap.SugaredLogger
 	storage storage.Storage
 }
 
-func NewServer(storage storage.Storage) *Server {
+func NewServer(logger *zap.SugaredLogger, storage storage.Storage) *Server {
 	s := &Server{
+		logger:  logger,
 		storage: storage,
 	}
 
@@ -24,7 +28,11 @@ func NewServer(storage storage.Storage) *Server {
 func (s *Server) ID(id string) (model.Joke, error) {
 
 	result, err := s.storage.FindID(id)
+
 	if err != nil {
+		s.logger.Infow("ID method error",
+			zap.Error(err))
+
 		return model.Joke{}, storage.ErrNoMatches
 	}
 	return result, nil
@@ -33,7 +41,10 @@ func (s *Server) ID(id string) (model.Joke, error) {
 func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 
 	result, err := s.storage.Fun()
+	if len(result) == 0 {
 
+		return nil, storage.ErrNoJokes
+	}
 	count := 0
 	const defaultLimit = 10
 	var v string
@@ -49,9 +60,8 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 		count = defaultLimit
 	}
 
-	if len(result) == 0 {
-		return nil, storage.ErrNoJokes
-	} else if count > len(result) {
+	if count > len(result) {
+
 		return nil, storage.ErrLimitOut
 	}
 	lim := result[:count]
@@ -118,6 +128,7 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 
 	err := s.storage.Save(j)
 	if err != nil {
+
 		return model.Joke{}, errors.New("error writing file")
 	}
 

@@ -5,12 +5,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func InitZapLog() *zap.Logger {
+func InitZapLog() *zap.SugaredLogger {
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
+	loggerMsg := logger.Sugar()
 	logger.Info("Starting programm")
-	return logger
+	return loggerMsg
 }

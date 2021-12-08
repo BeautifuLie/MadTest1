@@ -16,19 +16,16 @@ import (
 )
 
 func main() {
-	loggerMgr := logging.InitZapLog()
-	zap.ReplaceGlobals(loggerMgr)
-	defer loggerMgr.Sync()
-	logger := loggerMgr.Sugar()
+	logger := logging.InitZapLog()
 
-	mongoStorage, err := mongostorage.NewMongoStorage("mongodb://localhost:27017")
+	mongoStorage, err := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
 	if err != nil {
 		zap.S().Errorw("Error during connect...", err)
 	}
 
-	server := joker.NewServer(mongoStorage)
+	server := joker.NewServer(logger, mongoStorage)
 
-	myRouter := handlers.HandleRequest(handlers.RetHandler(server))
+	myRouter := handlers.HandleRequest(handlers.RetHandler(logger, server))
 
 	s := http.Server{
 		Addr:         ":9090",
