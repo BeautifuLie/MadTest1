@@ -3,31 +3,63 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"io"
-	"log"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"program/joker"
 	"program/model"
 	"program/storage"
 
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type apiHandler struct {
 	Server *joker.Server
+	logger *zap.SugaredLogger
 }
 
-func RetHandler(server *joker.Server) *apiHandler {
+func RetHandler(logger *zap.SugaredLogger, server *joker.Server) *apiHandler {
 	return &apiHandler{
 		Server: server,
+		logger: logger,
 	}
+}
+
+func LoggingMiddleware(logger *zap.SugaredLogger) mux.MiddlewareFunc {
+	return mux.MiddlewareFunc(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			s := time.Now()
+			logger.Debugw("HTTP request received",
+				"url", r.URL)
+
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, r)
+
+			logger.Debugw("HTTP request processed",
+				"url", r.URL,
+				"duration", time.Since(s),
+				"code", rr.Code,
+				// "response", rr.Body.String()
+			)
+
+			w.WriteHeader(rr.Code)
+			_, err := rr.Body.WriteTo(w)
+			if err != nil {
+				logger.Error(err)
+			}
+		})
+	})
+
 }
 
 func HandleRequest(h *apiHandler) *mux.Router {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
+	myRouter.Use(LoggingMiddleware(h.logger))
 	myRouter.HandleFunc("/jokes", h.homePage).Methods(http.MethodGet)
 	myRouter.HandleFunc("/jokes/funniest", h.GetFunniestJokes).Methods(http.MethodGet)
 	myRouter.HandleFunc("/jokes/random", h.GetRandomJoke).Methods(http.MethodGet)
@@ -49,13 +81,19 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 	res, err := h.Server.ID(id)
 
 	if err != nil {
-		respondError(err, w)
+		h.logger.Info("GetJokeByID ",
+			"error", err,
+			" id:", id)
+		h.respondError(err, w, r)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
+		h.logger.Errorw("GetJokeByID encoding error ",
+			"error", err,
+			"id", id)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -65,19 +103,24 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	m, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		log.Fatal(err)
+		h.logger.Error("GetFunniest query error",
+			"error", err)
 	}
 
-	res, err1 := h.Server.Funniest(m)
+	res, err := h.Server.Funniest(m)
 
-	if err1 != nil {
-		respondError(err1, w)
+	if err != nil {
+		h.logger.Error("GetFunniest ",
+			"error", err)
+		h.respondError(err, w, r)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
+		h.logger.Error("GetFunniest encoding error ",
+			"error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
@@ -86,18 +129,23 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 
 	m, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		log.Fatal(err, "Error parsing query")
+		h.logger.Errorw("GetRandomJoke query error",
+			"error", err)
 	}
 
 	res, err1 := h.Server.Random(m)
 	if err1 != nil {
-		respondError(err1, w)
+		h.logger.Errorw("GetRandomJoke error",
+			"error", err)
+		h.respondError(err, w, r)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
+		h.logger.Errorw("GetRandomJoke encoding error",
+			"error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
@@ -107,7 +155,10 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 	text := vars["text"]
 	res, err := h.Server.Text(text)
 	if err != nil {
-		respondError(err, w)
+		h.logger.Errorw("GetJokeByText error",
+			"error", err,
+			"text", text)
+		h.respondError(err, w, r)
 		return
 	}
 
@@ -116,6 +167,9 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(res)
 
 	if err != nil {
+		h.logger.Errorw("GetJokeByText encoding error",
+			"error", err,
+			"text", text)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -124,6 +178,9 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	var j model.Joke
 	err := json.NewDecoder(io.LimitReader(r.Body, 4*1024)).Decode(&j)
 	if err != nil {
+		h.logger.Errorw("AddJoke error",
+			"error", err,
+			"text", r.Body)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -137,13 +194,20 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err != nil {
+			h.logger.Errorw("AddJoke error saving",
+				"error", err,
+				"text", r.Body)
 			http.Error(w, "error saving file", http.StatusInternalServerError)
 		}
+		h.logger.Error("AddJoke error ",
+			"validation error", err)
 		return
 	}
 	res, err1 := h.Server.Add(j)
 	if err1 != nil {
-		respondError(err1, w)
+		h.logger.Errorw("AddJoke error",
+			"error", err1)
+		h.respondError(err, w, r)
 		return
 	}
 
@@ -151,6 +215,9 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
+		h.logger.Errorw("AddJoke encoding error",
+			"error", err,
+			"text", r.Body)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
@@ -164,11 +231,15 @@ func (h *apiHandler) UpdateJoke(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(io.LimitReader(r.Body, 4*1024)).Decode(&j)
 	if err != nil {
+		h.logger.Errorw("UpdateJoke error",
+			"error", err,
+			"text", r.Body)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if len(j.Body) == 0 {
+		h.logger.Error("UpdateJoke: Body is empty error")
 		http.Error(w, "Body is empty", http.StatusBadRequest)
 		return
 
@@ -176,13 +247,18 @@ func (h *apiHandler) UpdateJoke(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.Server.Update(j, id)
 	if err != nil {
-		respondError(err, w)
+		h.logger.Errorw("UpdateJoke  error",
+			"error", err)
+		h.respondError(err, w, r)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
+		h.logger.Errorw("UpdateJoke encoding error",
+			"error", err,
+			"text", r.Body)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -193,7 +269,10 @@ type serverError struct {
 	Description string
 }
 
-func respondError(err error, w http.ResponseWriter) {
+func (h *apiHandler) respondError(err error, w http.ResponseWriter, r *http.Request) {
+	h.logger.Errorw("HTTP respond error",
+		"error", err,
+		"url", r.URL)
 	if errors.Is(err, storage.ErrNoMatches) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

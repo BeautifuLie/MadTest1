@@ -4,12 +4,14 @@ import (
 	"net/url"
 	"program/joker"
 	"program/model"
+	"program/storage"
 	mocks "program/storage/mock"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestID(t *testing.T) {
@@ -21,29 +23,10 @@ func TestID(t *testing.T) {
 		Body: "haha",
 	}
 
-	store.EXPECT().FindID("test").Times(1).Return(j, nil)
+	store.EXPECT().FindID("test").Return(j, nil)
 
 	s := joker.NewServer(store)
 	got, err := s.ID("test")
-
-	require.NoError(t, err)
-	require.Equal(t, j, got)
-
-}
-
-func TestText(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	store := mocks.NewMockStorage(ctrl)
-
-	// j1 := model.Joke{Title: "fawfaw", Body: "haha", ID: "1q2w3e", Score: 1}
-	// j2 := model.Joke{Title: "other", Body: "haha1", ID: "4r5t6y", Score: 2}
-
-	j := []model.Joke{}
-
-	store.EXPECT().TextSearch("jira").Return(j, nil).Times(1)
-
-	s := joker.NewServer(store)
-	got, err := s.Text("jira")
 
 	require.NoError(t, err)
 	require.Equal(t, j, got)
@@ -102,5 +85,49 @@ func TestRandom(t *testing.T) {
 
 	r2, _ := s.Random(m)
 	require.NotEqual(t, r1, r2)
+
+}
+func TestText(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	store := mocks.NewMockStorage(ctrl)
+
+	// j1 := model.Joke{Title: "fawfaw", Body: "haha", ID: "1q2w3e", Score: 1}
+	// j2 := model.Joke{Title: "other", Body: "haha1", ID: "4r5t6y", Score: 2}
+
+	j := []model.Joke{}
+
+	store.EXPECT().TextSearch("jira").Return(j, nil).Times(1)
+
+	s := joker.NewServer(store)
+	got, err := s.Text("jira")
+
+	require.NoError(t, err)
+	require.Equal(t, j, got)
+
+}
+
+func TestAdd(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	store := mocks.NewMockStorage(ctrl)
+
+	j := model.Joke{Title: "fawfaw", Body: "haha", ID: "1q2w3e", Score: 1}
+
+	store.EXPECT().Save(j).Return(nil)
+	s := joker.NewServer(store)
+	_, err := s.Add(j)
+	require.NoError(t, err)
+
+}
+
+func TestUpdateB(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	store := mocks.NewMockStorage(ctrl)
+
+	j := model.Joke{Title: "fawfaw", Body: "tratata", ID: "1q2w3e", Score: 1}
+	a := &mongo.UpdateResult{}
+	store.EXPECT().UpdateByID(j.Body, j.ID).Return(a, storage.ErrNoJokes)
+	s := joker.NewServer(store)
+	_, err := s.Update(j, j.ID)
+	require.Error(t, err)
 
 }

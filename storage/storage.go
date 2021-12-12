@@ -13,7 +13,7 @@ import (
 //Errors
 var ErrNoMatches = errors.New(" No matches")
 var ErrLimitOut = errors.New(" Limit out of range")
-var ErrNoJokes = errors.New(" No jokes in database. Create jokes first")
+var ErrNoJokes = errors.New(" No joke in database with such parameters. Create jokes first")
 
 type Storage interface {
 	FindID(id string) (model.Joke, error)
