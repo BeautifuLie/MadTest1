@@ -3,6 +3,7 @@ package joker_test
 import (
 	"net/url"
 	"program/joker"
+	"program/logging"
 	"program/model"
 	"program/storage"
 	mocks "program/storage/mock"
@@ -25,7 +26,8 @@ func TestID(t *testing.T) {
 
 	store.EXPECT().FindID("test").Return(j, nil)
 
-	s := joker.NewServer(store)
+	logger := logging.InitZapLog()
+	s := joker.NewServer(logger, store)
 	got, err := s.ID("test")
 
 	require.NoError(t, err)
@@ -53,7 +55,8 @@ func TestFunniest(t *testing.T) {
 
 	store.EXPECT().Fun().Return(j, nil)
 
-	s := joker.NewServer(store)
+	logger := logging.InitZapLog()
+	s := joker.NewServer(logger, store)
 
 	m, _ := url.ParseQuery("limit=2")
 	got, err := s.Funniest(m)
@@ -76,7 +79,8 @@ func TestRandom(t *testing.T) {
 
 	store.EXPECT().Random().Times(2).Return(j, nil)
 
-	s := joker.NewServer(store)
+	logger := logging.InitZapLog()
+	s := joker.NewServer(logger, store)
 
 	m, _ := url.ParseQuery("limit=4")
 	r1, err := s.Random(m)
@@ -98,7 +102,8 @@ func TestText(t *testing.T) {
 
 	store.EXPECT().TextSearch("jira").Return(j, nil).Times(1)
 
-	s := joker.NewServer(store)
+	logger := logging.InitZapLog()
+	s := joker.NewServer(logger, store)
 	got, err := s.Text("jira")
 
 	require.NoError(t, err)
@@ -113,7 +118,8 @@ func TestAdd(t *testing.T) {
 	j := model.Joke{Title: "fawfaw", Body: "haha", ID: "1q2w3e", Score: 1}
 
 	store.EXPECT().Save(j).Return(nil)
-	s := joker.NewServer(store)
+	logger := logging.InitZapLog()
+	s := joker.NewServer(logger, store)
 	_, err := s.Add(j)
 	require.NoError(t, err)
 
@@ -126,7 +132,8 @@ func TestUpdateB(t *testing.T) {
 	j := model.Joke{Title: "fawfaw", Body: "tratata", ID: "1q2w3e", Score: 1}
 	a := &mongo.UpdateResult{}
 	store.EXPECT().UpdateByID(j.Body, j.ID).Return(a, storage.ErrNoJokes)
-	s := joker.NewServer(store)
+	logger := logging.InitZapLog()
+	s := joker.NewServer(logger, store)
 	_, err := s.Update(j, j.ID)
 	require.Error(t, err)
 

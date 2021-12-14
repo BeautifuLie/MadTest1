@@ -2,6 +2,7 @@ package joker
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/url"
 	"program/model"
@@ -30,13 +31,6 @@ func (s *Server) ID(id string) (model.Joke, error) {
 	result, err := s.storage.FindID(id)
 
 	if err != nil {
-
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.ID",
-			"error", err,
-		).Info("get by ID failed")
-
 		return model.Joke{}, storage.ErrNoMatches
 	}
 	return result, nil
@@ -47,13 +41,6 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	result, err := s.storage.Fun()
 
 	if len(result) == 0 {
-
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Funniest",
-			"error", "No jokes in database",
-		).Info("get Funniest failed")
-
 		return nil, storage.ErrNoJokes
 	}
 
@@ -73,11 +60,6 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 	}
 
 	if count > len(result) {
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Funniest",
-			"error", "Query limit out of range",
-		).Info("get Funniest failed")
 		return nil, storage.ErrLimitOut
 	}
 	lim := result[:count]
@@ -85,24 +67,16 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 		return lim, nil
 	}
 
-	s.logger.With(
-		"package", "joker",
-		"function", "joker.Funniest",
-		"error", err,
-	).Error("get Funniest failed")
-
 	return nil, err
 }
 
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 
 	res, err := s.storage.Random()
+	if err != nil {
+		return nil, err
+	}
 	if len(res) == 0 {
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Random",
-			"error", "No jokes in database",
-		).Info("get Random failed")
 		return nil, storage.ErrNoJokes
 	}
 
@@ -124,11 +98,6 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 	}
 
 	if count > len(res) {
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Random",
-			"error", "Query limit out of range",
-		).Info("get Random failed")
 		return nil, storage.ErrLimitOut
 	}
 
@@ -143,24 +112,13 @@ func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 		return result, nil
 	}
 
-	s.logger.With(
-		"package", "joker",
-		"function", "joker.Random",
-		"error", err,
-	).Error("get Random failed")
-
-	return nil, err
+	return nil, fmt.Errorf("random jokes error%v", err)
 }
 
 func (s *Server) Text(text string) ([]model.Joke, error) {
 
 	result, err := s.storage.TextSearch(text)
 	if err != nil {
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Text",
-			"error", err,
-		).Info("get by Text failed")
 		return []model.Joke{}, storage.ErrNoMatches
 	}
 
@@ -172,11 +130,6 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 
 	err := s.storage.Save(j)
 	if err != nil {
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Add",
-			"error", err,
-		).Info("Add joke failed")
 		return model.Joke{}, errors.New("error writing file")
 	}
 
@@ -187,21 +140,12 @@ func (s *Server) Update(j model.Joke, id string) (model.Joke, error) {
 
 	_, err := s.storage.UpdateByID(j.Body, id)
 	if err != nil {
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Update",
-			"error", err,
-		).Info("Update joke failed")
-		return model.Joke{}, err
+		return model.Joke{}, fmt.Errorf("update joke with id %s error:%v", id, err)
 	}
+
 	updated, err := s.ID(id)
 	if err != nil {
-		s.logger.With(
-			"package", "joker",
-			"function", "joker.Update",
-			"error", err,
-		).Info("Updated joke failed")
-		return model.Joke{}, storage.ErrNoJokes
+		return model.Joke{}, fmt.Errorf("load joke with id %s error:%v", id, err)
 	}
 
 	return updated, nil

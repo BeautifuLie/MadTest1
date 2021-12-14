@@ -12,15 +12,16 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	logger := logging.InitZapLog()
+	godotenv.Load(".env")
 
-	mongoStorage, err := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	mongoStorage, err := mongostorage.NewMongoStorage(logger, os.Getenv("MONGODB_URI"))
 	if err != nil {
-		zap.S().Errorw("Error during connect...", err)
+		logger.Errorw("Error during connect...", err)
 	}
 
 	server := joker.NewServer(logger, mongoStorage)
