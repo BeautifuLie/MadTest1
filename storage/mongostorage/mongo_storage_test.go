@@ -1,6 +1,7 @@
 package mongostorage_test
 
 import (
+	"program/logging"
 	"program/model"
 	"program/storage/mongostorage"
 	"testing"
@@ -10,10 +11,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var ms, _ = mongostorage.NewMongoStorage("mongodb://localhost:27017")
-
+func Col() *mongostorage.MongoStorage {
+	logger := logging.InitZapLog()
+	var ms, _ = mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	return ms
+}
 func TestFindID(t *testing.T) {
-
+	ms := Col()
 	var j = model.Joke{
 		Title: "Buy cheese and bread for breakfast.",
 		Body:  "and go away from me",
@@ -29,7 +33,7 @@ func TestFindID(t *testing.T) {
 }
 
 func TestFun(t *testing.T) {
-
+	ms := Col()
 	var j = "On the condition he gets to install windows.\n\n\n"
 
 	r, _ := ms.Fun()
@@ -39,6 +43,7 @@ func TestFun(t *testing.T) {
 }
 
 func TestTextS(t *testing.T) {
+	ms := Col()
 	var s = "porcupinetree"
 
 	_, err := ms.TextSearch(s)
@@ -47,7 +52,7 @@ func TestTextS(t *testing.T) {
 }
 
 func TestUpdateByID(t *testing.T) {
-
+	ms := Col()
 	var j = model.Joke{
 		Body: "updaaat4e v.5",
 		ID:   "124124",

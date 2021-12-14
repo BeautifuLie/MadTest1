@@ -10,8 +10,10 @@ func InitZapLog() *zap.SugaredLogger {
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.DisableStacktrace = true
 	logger, _ := config.Build()
 	loggerMsg := logger.Sugar()
 	logger.Info("Starting programm")
+
 	return loggerMsg
 }

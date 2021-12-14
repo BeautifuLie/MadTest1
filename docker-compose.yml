@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./
+    container_name: "web"
+
+    ports:
+      - "9090:9090"
+    environment:
+      - "MONGODB_URI=mongodb://db:27017"
+    depends_on:
+      - db
+    networks:
+      - fullstack
+
+  db:
+    restart: always
+    image: mongo:4.2
+    container_name: "database"
+    volumes:
+      - database_mongo:/home/lafazan/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - fullstack
+volumes:
+  database_mongo:
+
+    null
+networks:
+  fullstack:
+    driver: bridge

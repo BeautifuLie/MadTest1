@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"program/handlers"
 	"program/joker"
+	"program/logging"
 	"program/model"
 	"program/storage/mongostorage"
 	"testing"
@@ -24,9 +25,10 @@ func TestGetJokeByID(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"id": "4xjyho1"})
 	responseRecorder := httptest.NewRecorder()
 
-	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
-	s := joker.NewServer(mongoStorage)
-	h := handlers.RetHandler(s)
+	logger := logging.InitZapLog()
+	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	s := joker.NewServer(logger, mongoStorage)
+	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 
 	h.GetJokeByID(responseRecorder, request)
@@ -39,11 +41,12 @@ func TestGetFunniestJokes(t *testing.T) {
 		fmt.Sprintf("/jokes/funniest?limit=%v", 3), nil)
 	responseRecorder := httptest.NewRecorder()
 
-	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
+	logger := logging.InitZapLog()
+	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
 
-	s := joker.NewServer(mongoStorage)
+	s := joker.NewServer(logger, mongoStorage)
 
-	h := handlers.RetHandler(s)
+	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 
 	h.GetFunniestJokes(responseRecorder, request)
@@ -67,9 +70,10 @@ func TestGetRandomJoke(t *testing.T) {
 		"/jokes/random", nil)
 	rr := httptest.NewRecorder()
 
-	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
-	s := joker.NewServer(mongoStorage)
-	h := handlers.RetHandler(s)
+	logger := logging.InitZapLog()
+	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	s := joker.NewServer(logger, mongoStorage)
+	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 	h.GetRandomJoke(rr, request)
 
@@ -79,9 +83,10 @@ func TestGetRandomJoke(t *testing.T) {
 		"/jokes/random", nil)
 	rr1 := httptest.NewRecorder()
 
-	mongoStorage1, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
-	s1 := joker.NewServer(mongoStorage1)
-	h1 := handlers.RetHandler(s1)
+	logger1 := logging.InitZapLog()
+	mongoStorage1, _ := mongostorage.NewMongoStorage(logger1, "mongodb://localhost:27017")
+	s1 := joker.NewServer(logger1, mongoStorage1)
+	h1 := handlers.RetHandler(logger1, s1)
 	handlers.HandleRequest(h1)
 	h.GetRandomJoke(rr1, request1)
 
@@ -96,9 +101,10 @@ func TestGetJokeByText(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"text": "porcupinetree"})
 	responseRecorder := httptest.NewRecorder()
 
-	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
-	s := joker.NewServer(mongoStorage)
-	h := handlers.RetHandler(s)
+	logger := logging.InitZapLog()
+	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	s := joker.NewServer(logger, mongoStorage)
+	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 
 	h.GetJokeByText(responseRecorder, request)
@@ -116,9 +122,10 @@ func TestAddJoke(t *testing.T) {
 
 	responseRecorder := httptest.NewRecorder()
 
-	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
-	s := joker.NewServer(mongoStorage)
-	h := handlers.RetHandler(s)
+	logger := logging.InitZapLog()
+	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	s := joker.NewServer(logger, mongoStorage)
+	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 
 	h.AddJoke(responseRecorder, request)

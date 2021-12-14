@@ -67,9 +67,9 @@ func (ms *MongoStorage) FindID(id string) (model.Joke, error) {
 
 	err := ms.collection.FindOne(ctx, bson.M{"id": id}).Decode(&j)
 	if err != nil {
-		ms.logger.Errorw("Storage FindID error:%", "error", err)
+
 		if err == mongo.ErrNoDocuments {
-			ms.logger.Debug("Storage FindID error: ", err)
+
 			return model.Joke{}, mongo.ErrNoDocuments
 		}
 		return model.Joke{}, fmt.Errorf("failed to execute query,error:%w", err)
@@ -90,12 +90,12 @@ func (ms *MongoStorage) Fun() ([]model.Joke, error) {
 
 	result, err := ms.collection.Find(ctx, bson.D{}, opts)
 	if err != nil {
-		ms.logger.Error("Storage Fun error:", err)
+
 		return nil, err
 	}
 
 	if err = result.All(ctx, &j); err != nil {
-		ms.logger.Error("Storage Fun decode error", err)
+
 		return nil, err
 	}
 
@@ -110,12 +110,12 @@ func (ms *MongoStorage) Random() ([]model.Joke, error) {
 
 	result, err := ms.collection.Find(ctx, bson.D{})
 	if err != nil {
-		ms.logger.Error("Storage Random error:", err)
+
 		return nil, err
 	}
 
 	if err = result.All(ctx, &j); err != nil {
-		ms.logger.Error("Storage Random decode error", err)
+
 		return nil, err
 	}
 
@@ -138,15 +138,15 @@ func (ms *MongoStorage) TextSearch(text string) ([]model.Joke, error) {
 
 	result, err := ms.collection.Find(ctx, filter)
 	if err != nil {
-		ms.logger.Error("Storage TextSearch error", err)
+
 		return nil, err
 	}
 
 	if err = result.All(ctx, &j); err != nil {
-		ms.logger.Error("Storage TextSearch decode error ", err)
+
 		return nil, err
 	} else if len(j) == 0 {
-		ms.logger.Debug("Storage TextSearch error: ", err)
+
 		return nil, mongo.ErrNoDocuments
 	}
 
@@ -159,7 +159,7 @@ func (ms *MongoStorage) Save(j model.Joke) error {
 	defer cancel()
 	_, err := ms.collection.InsertOne(ctx, j)
 	if err != nil {
-		ms.logger.Error("Storage Save error ", err)
+
 		return err
 	}
 	return nil
@@ -173,7 +173,7 @@ func (ms *MongoStorage) UpdateByID(text string, id string) (*mongo.UpdateResult,
 
 	res, err := ms.collection.UpdateOne(context.TODO(), filter, update, opts)
 	if err != nil {
-		ms.logger.Error("Storage UpdateByID error ", err)
+
 		return nil, err
 	}
 

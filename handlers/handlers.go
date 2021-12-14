@@ -81,8 +81,7 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 	res, err := h.Server.ID(id)
 
 	if err != nil {
-		h.logger.Info("GetJokeByID ",
-			"error", err,
+		h.logger.Infow("GetJokeByID ",
 			" id:", id)
 		h.respondError(err, w, r)
 		return
@@ -103,15 +102,14 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	m, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		h.logger.Error("GetFunniest query error",
+		h.logger.Errorw("GetFunniest query error",
 			"error", err)
 	}
 
 	res, err := h.Server.Funniest(m)
 
 	if err != nil {
-		h.logger.Error("GetFunniest ",
-			"error", err)
+
 		h.respondError(err, w, r)
 		return
 	}
@@ -156,7 +154,6 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 	res, err := h.Server.Text(text)
 	if err != nil {
 		h.logger.Errorw("GetJokeByText error",
-			"error", err,
 			"text", text)
 		h.respondError(err, w, r)
 		return
