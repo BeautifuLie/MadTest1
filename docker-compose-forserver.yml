@@ -3,13 +3,13 @@ version: '3.8'
 services:
   web:
     restart: always
-    build: ./
+    image: 1461721/go-app:1.1
     container_name: "web"
 
     ports:
       - "9090:9090"
-    env_file:
-      - .env
+    environment:
+      - "MONGODB_URI=mongodb://db:27017"
     depends_on:
       - db
     networks:
@@ -20,7 +20,7 @@ services:
     image: mongo:4.2
     container_name: "database"
     volumes:
-      - /home/lafazan/mongodb/data:/home/lafazan/data/db
+      - database_mongo:/home/data/db
     ports:
       - "27017:27017"
     networks:

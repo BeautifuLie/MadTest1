@@ -21,7 +21,10 @@ type MongoStorage struct {
 func NewMongoStorage(logger *zap.SugaredLogger, connectURI string) (*MongoStorage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
+	// credential := options.Credential{
+	// 	Username: os.Getenv("MONGO_INITDB_ROOT_USERNAME"),
+	// 	Password: os.Getenv("MONGO_INITDB_ROOT_PASSWORD"),
+	// }
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectURI))
 	if err != nil {
 		logger.Fatalf("error while connecting to mongo: %v", err)

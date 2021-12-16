@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"io"
@@ -131,10 +132,9 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 			"error", err)
 	}
 
-	res, err1 := h.Server.Random(m)
-	if err1 != nil {
-		h.logger.Errorw("GetRandomJoke error",
-			"error", err)
+	res, err := h.Server.Random(m)
+	if err != nil {
+
 		h.respondError(err, w, r)
 		return
 	}
@@ -151,6 +151,7 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	text := vars["text"]
+	fmt.Println(text)
 	res, err := h.Server.Text(text)
 	if err != nil {
 		h.logger.Errorw("GetJokeByText error",
