@@ -73,9 +73,7 @@ func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
 func (s *Server) Random(m url.Values) ([]model.Joke, error) {
 
 	res, err := s.storage.Random()
-	if err != nil {
-		return nil, err
-	}
+
 	if len(res) == 0 {
 		return nil, storage.ErrNoJokes
 	}
