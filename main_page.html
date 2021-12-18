@@ -8,17 +8,37 @@
 </head>
 
 <body>
+
     <h3>Choose your joke</h3>
 
     <form action="/jokes/funniest">
+        <input type="text" name="limit" placeholder="limit" /> <br />
         <button>Funniest jokes</button>
     </form>
     <br>
 
     <form action="/jokes/random">
+        <input type="text" name="limit" placeholder="limit" /> <br />
         <button>Random</button>
     </form>
+    <br>
+    <form action="/jokes/" method="GET">
+        <input type="text" name="id" placeholder="id" /> <br />
+        <input type="submit" value="Get by ID" />
+    </form>
+    <br>
+    <form action="/jokes/search/" method="GET">
+        <input type="text" name="text" placeholder="type text" /> <br />
+        <input type="submit" value="Search by text" />
+    </form>
 
-</body>
+    <br>
+    <br>
 
-</html>
+    <form enctype='application/json' action="/jokes" method="POST">
+        Title : <input type='text' name='title' placeholder="type title" /> <br />
+        Body : <input type='text' name='body' placeholder="type body" /> <br />
+        Score: <input type='number' name='score' placeholder="type score" /> <br />
+        ID : <input type='text' name='id' placeholder="type id" /> <br />
+        <input type="submit" value="Add joke" />
+    </form>
