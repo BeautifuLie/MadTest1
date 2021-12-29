@@ -1,7 +1,6 @@
 package mongostorage_test
 
 import (
-	"program/logging"
 	"program/model"
 	"program/storage/mongostorage"
 	"testing"
@@ -12,8 +11,8 @@ import (
 )
 
 func Col() *mongostorage.MongoStorage {
-	logger := logging.InitZapLog()
-	var ms, _ = mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+
+	var ms, _ = mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	return ms
 }
 func TestFindID(t *testing.T) {

@@ -9,16 +9,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.uber.org/zap"
 )
 
 type MongoStorage struct {
 	client     *mongo.Client
 	collection *mongo.Collection
-	logger     *zap.SugaredLogger
 }
 
-func NewMongoStorage(logger *zap.SugaredLogger, connectURI string) (*MongoStorage, error) {
+func NewMongoStorage(connectURI string) (*MongoStorage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// credential := options.Credential{
@@ -27,12 +25,10 @@ func NewMongoStorage(logger *zap.SugaredLogger, connectURI string) (*MongoStorag
 	// }
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectURI))
 	if err != nil {
-		logger.Fatalf("error while connecting to mongo: %v", err)
 		return nil, fmt.Errorf(" error while connecting to mongo: %v", err)
 	}
 
 	if err = client.Ping(ctx, nil); err != nil {
-		logger.Fatalf("error while pinging mongo: %v", err)
 		return nil, fmt.Errorf("pinging mongo: %w", err)
 	}
 
@@ -41,7 +37,6 @@ func NewMongoStorage(logger *zap.SugaredLogger, connectURI string) (*MongoStorag
 	ms := &MongoStorage{
 		client:     client,
 		collection: db.Collection("Jokes"),
-		logger:     logger,
 	}
 
 	model := []mongo.IndexModel{
@@ -57,7 +52,7 @@ func NewMongoStorage(logger *zap.SugaredLogger, connectURI string) (*MongoStorag
 	}
 	_, err = ms.collection.Indexes().CreateMany(context.TODO(), model)
 	if err != nil {
-		logger.Errorf("error creating indexes: %v", err)
+
 		return nil, err
 	}
 
@@ -82,7 +77,7 @@ func (ms *MongoStorage) FindID(id string) (model.Joke, error) {
 
 }
 
-func (ms *MongoStorage) Fun() ([]model.Joke, error) {
+func (ms *MongoStorage) Fun(limit int64) ([]model.Joke, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -90,7 +85,7 @@ func (ms *MongoStorage) Fun() ([]model.Joke, error) {
 
 	opts := options.Find()
 	opts.SetSort(bson.D{{Key: "score", Value: -1}})
-
+	opts.SetLimit(limit)
 	result, err := ms.collection.Find(ctx, bson.D{}, opts)
 	if err != nil {
 
@@ -105,20 +100,18 @@ func (ms *MongoStorage) Fun() ([]model.Joke, error) {
 	return j, nil
 }
 
-func (ms *MongoStorage) Random() ([]model.Joke, error) {
+func (ms *MongoStorage) Random(limit int) ([]model.Joke, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var j []model.Joke
 
-	result, err := ms.collection.Find(ctx, bson.D{})
+	result, err := ms.collection.Aggregate(context.Background(), []bson.M{{"$sample": bson.M{"size": limit}}})
 	if err != nil {
-
-		return nil, err
+		return nil, nil
 	}
 
 	if err = result.All(ctx, &j); err != nil {
-
 		return nil, err
 	}
 
@@ -183,16 +176,11 @@ func (ms *MongoStorage) UpdateByID(text string, id string) (*mongo.UpdateResult,
 	return res, nil
 }
 
-func (ms *MongoStorage) CloseClientDB() {
-
-	if ms.client == nil {
-		return
-	}
+func (ms *MongoStorage) CloseClientDB() error {
 
 	err := ms.client.Disconnect(context.TODO())
 	if err != nil {
-		ms.logger.Error("Storage CloseClientDB error ", err)
+		return err
 	}
-	ms.logger.Info("Connection to MongoDB closed...")
-
+	return nil
 }

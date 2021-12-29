@@ -19,7 +19,7 @@ func main() {
 	logger := logging.InitZapLog()
 	godotenv.Load(".env")
 
-	mongoStorage, err := mongostorage.NewMongoStorage(logger, os.Getenv("MONGODB_URI"))
+	mongoStorage, err := mongostorage.NewMongoStorage(os.Getenv("MONGODB_URI"))
 	if err != nil {
 		logger.Errorw("Error during connect...", err)
 	}
@@ -56,7 +56,11 @@ func main() {
 		logger.Error(err)
 	}
 
-	mongoStorage.CloseClientDB()
+	err = mongoStorage.CloseClientDB()
+	if err != nil {
+		logger.Info(err)
+	}
+	logger.Info("Connection to MongoDB closed...")
 
 	logger.Info("Shutdown...")
 

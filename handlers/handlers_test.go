@@ -26,7 +26,7 @@ func TestGetJokeByID(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s := joker.NewServer(logger, mongoStorage)
 	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
@@ -42,7 +42,7 @@ func TestGetFunniestJokes(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 
 	s := joker.NewServer(logger, mongoStorage)
 
@@ -71,7 +71,7 @@ func TestGetRandomJoke(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s := joker.NewServer(logger, mongoStorage)
 	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
@@ -84,7 +84,7 @@ func TestGetRandomJoke(t *testing.T) {
 	rr1 := httptest.NewRecorder()
 
 	logger1 := logging.InitZapLog()
-	mongoStorage1, _ := mongostorage.NewMongoStorage(logger1, "mongodb://localhost:27017")
+	mongoStorage1, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s1 := joker.NewServer(logger1, mongoStorage1)
 	h1 := handlers.RetHandler(logger1, s1)
 	handlers.HandleRequest(h1)
@@ -102,7 +102,7 @@ func TestGetJokeByText(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s := joker.NewServer(logger, mongoStorage)
 	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
@@ -123,7 +123,7 @@ func TestAddJoke(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	s := joker.NewServer(logger, mongoStorage)
 	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
