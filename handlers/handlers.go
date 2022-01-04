@@ -200,7 +200,7 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		h.logger.Error("AddJoke error ",
-			"validation error", err)
+			"validation error:", err)
 		_ = json.NewEncoder(w).Encode(serverError{
 			Code:        "validation_err",
 			Description: err.Error(),

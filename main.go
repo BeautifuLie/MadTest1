@@ -21,7 +21,7 @@ func main() {
 
 	mongoStorage, err := mongostorage.NewMongoStorage(os.Getenv("MONGODB_URI"))
 	if err != nil {
-		logger.Errorw("Error during connect...", err)
+		logger.Errorw("Error during connect...", "error", err)
 	}
 
 	server := joker.NewServer(logger, mongoStorage)
