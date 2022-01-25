@@ -1,7 +1,6 @@
 package mongostorage_test
 
 import (
-	"program/logging"
 	"program/model"
 	"program/storage/mongostorage"
 	"testing"
@@ -12,31 +11,32 @@ import (
 )
 
 func Col() *mongostorage.MongoStorage {
-	logger := logging.InitZapLog()
-	var ms, _ = mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
+
+	var ms, _ = mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	return ms
 }
 func TestFindID(t *testing.T) {
 	ms := Col()
 	var j = model.Joke{
-		Title: "Buy cheese and bread for breakfast.",
-		Body:  "and go away from me",
-		Score: 1,
-		ID:    "76h8ji",
+		Title: "Breaking News: Bill Gates has agreed to pay for Trump's wall",
+		Body:  "On the condition he gets to install windows.\n\n\n",
+		Score: 48526,
+		ID:    "5tn84z",
 	}
 
 	_, err := ms.FindID("gesgsg1")
 	assert.Equal(t, err, mongo.ErrNoDocuments)
 
-	x, _ := ms.FindID("76h8ji")
+	x, _ := ms.FindID("5tn84z")
 	assert.Equal(t, j, x)
 }
 
 func TestFun(t *testing.T) {
 	ms := Col()
+	var limit int64
 	var j = "On the condition he gets to install windows.\n\n\n"
 
-	r, _ := ms.Fun()
+	r, _ := ms.Fun(limit)
 	r1 := r[0]
 	assert.Equal(t, j, r1.Body)
 
@@ -54,8 +54,8 @@ func TestTextS(t *testing.T) {
 func TestUpdateByID(t *testing.T) {
 	ms := Col()
 	var j = model.Joke{
-		Body: "updaaat4e v.5",
-		ID:   "124124",
+		Body: "updaaat4e v.2",
+		ID:   "5sfp26",
 	}
 
 	res, err := ms.UpdateByID(j.Body, j.ID)

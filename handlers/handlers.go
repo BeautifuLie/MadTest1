@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"program/joker"
 	"program/model"
 	"program/storage"
@@ -78,7 +77,9 @@ func (h *apiHandler) homePage(w http.ResponseWriter, r *http.Request) {
 func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 
 	id := r.URL.Query().Get("id")
-
+	if id == "" {
+		json.NewEncoder(w).Encode("id field is empty - type id value")
+	}
 	res, err := h.Server.ID(id)
 
 	if err != nil {
@@ -100,14 +101,9 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 
-	m, err := url.ParseQuery(r.URL.RawQuery)
+	limit := r.FormValue("limit")
 
-	if err != nil {
-		h.logger.Errorw("GetFunniest query error",
-			"error", err)
-	}
-
-	res, err := h.Server.Funniest(m)
+	res, err := h.Server.Funniest(limit)
 
 	if err != nil {
 
@@ -118,7 +114,7 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.MarshalIndent(res, "", "  ")
 	w.Write(b)
-	// err = json.NewEncoder(w).Encode(res)
+
 	if err != nil {
 		h.logger.Error("GetFunniest encoding error ",
 			"error", err)
@@ -128,13 +124,8 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 
 func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 
-	m, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		h.logger.Errorw("GetRandomJoke query error",
-			"error", err)
-	}
-
-	res, err := h.Server.Random(m)
+	limit := r.FormValue("limit")
+	res, err := h.Server.Random(limit)
 	if err != nil {
 
 		h.respondError(err, w, r)
@@ -144,7 +135,7 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.MarshalIndent(res, "", "  ")
 	w.Write(b)
-	// err = json.NewEncoder(w).Encode(res)
+
 	if err != nil {
 		h.logger.Errorw("GetRandomJoke encoding error",
 			"error", err)
@@ -166,7 +157,6 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.MarshalIndent(res, "", "  ")
 	w.Write(b)
-	// err = json.NewEncoder(w).Encode(b)
 
 	if err != nil {
 		h.logger.Errorw("GetJokeByText encoding error",
@@ -210,7 +200,7 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		h.logger.Error("AddJoke error ",
-			"validation error", err)
+			"validation error:", err)
 		_ = json.NewEncoder(w).Encode(serverError{
 			Code:        "validation_err",
 			Description: err.Error(),
@@ -230,7 +220,7 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	b, err := json.MarshalIndent(res, "", "  ")
 	w.Write(b)
-	// err := json.NewEncoder(w).Encode(res)
+
 	if err != nil {
 		h.logger.Errorw("AddJoke encoding error",
 			"error", err,
@@ -273,7 +263,7 @@ func (h *apiHandler) UpdateJoke(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	b, err := json.MarshalIndent(res, "", "  ")
 	w.Write(b)
-	// err = json.NewEncoder(w).Encode(res)
+
 	if err != nil {
 		h.logger.Errorw("UpdateJoke encoding error",
 			"error", err,
@@ -307,19 +297,3 @@ func (h *apiHandler) respondError(err error, w http.ResponseWriter, r *http.Requ
 	}
 
 }
-
-// func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
-// 	response, err := json.Marshal(payload)
-// 	if err != nil {
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		w.Write([]byte(err.Error()))
-// 		return
-// 	}
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(status)
-// 	w.Write([]byte(response))
-
-// 	enc := json.NewEncoder(w)
-// 	enc.SetIndent("", "\t")
-// 	err = enc.Encode(&res)
-// }

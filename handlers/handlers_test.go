@@ -1,7 +1,6 @@
 package handlers_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,49 +12,48 @@ import (
 	"program/storage/mongostorage"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
+func Init() (*joker.Server, *httptest.ResponseRecorder, *zap.SugaredLogger) {
+	rr := httptest.NewRecorder()
+
+	logger := logging.InitZapLog()
+	mongoStorage, _ := mongostorage.NewMongoStorage("mongodb://localhost:27017")
+	s := joker.NewServer(logger, mongoStorage)
+
+	return s, rr, logger
+}
 func TestGetJokeByID(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
-		"/jokes/{id}", nil)
-	request = mux.SetURLVars(request, map[string]string{"id": "4xjyho1"})
-	responseRecorder := httptest.NewRecorder()
+		"/jokes/?id=4xjyho123", nil)
 
-	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
-	s := joker.NewServer(logger, mongoStorage)
-	h := handlers.RetHandler(logger, s)
+	fmt.Println(request)
+	serv, resp, log := Init()
+	h := handlers.RetHandler(log, serv)
 	handlers.HandleRequest(h)
-
-	h.GetJokeByID(responseRecorder, request)
-	assert.Equal(t, 404, responseRecorder.Code)
+	h.GetJokeByID(resp, request)
+	assert.Equal(t, http.StatusNotFound, resp.Code)
 
 }
 func TestGetFunniestJokes(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
 		fmt.Sprintf("/jokes/funniest?limit=%v", 3), nil)
-	responseRecorder := httptest.NewRecorder()
-
-	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
-
-	s := joker.NewServer(logger, mongoStorage)
-
+	s, rr, logger := Init()
 	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 
-	h.GetFunniestJokes(responseRecorder, request)
+	h.GetFunniestJokes(rr, request)
 
-	resp := responseRecorder.Body.Bytes()
+	res := rr.Body.Bytes()
 
 	var j []model.Joke
 
-	err := json.Unmarshal(resp, &j)
+	err := json.Unmarshal(res, &j)
 	require.NoError(t, err)
 
 	require.Equal(t, 3, len(j))
@@ -63,16 +61,13 @@ func TestGetFunniestJokes(t *testing.T) {
 	j1 := j[0]
 	assert.Equal(t, "On the condition he gets to "+
 		"install windows.\n\n\n", j1.Body)
+	assert.NotEqual(t, "On the condition he gets to ", j1.Body)
 }
 func TestGetRandomJoke(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
 		"/jokes/random", nil)
-	rr := httptest.NewRecorder()
-
-	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
-	s := joker.NewServer(logger, mongoStorage)
+	s, rr, logger := Init()
 	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 	h.GetRandomJoke(rr, request)
@@ -81,11 +76,7 @@ func TestGetRandomJoke(t *testing.T) {
 
 	request1 := httptest.NewRequest(http.MethodGet,
 		"/jokes/random", nil)
-	rr1 := httptest.NewRecorder()
-
-	logger1 := logging.InitZapLog()
-	mongoStorage1, _ := mongostorage.NewMongoStorage(logger1, "mongodb://localhost:27017")
-	s1 := joker.NewServer(logger1, mongoStorage1)
+	s1, rr1, logger1 := Init()
 	h1 := handlers.RetHandler(logger1, s1)
 	handlers.HandleRequest(h1)
 	h.GetRandomJoke(rr1, request1)
@@ -95,40 +86,33 @@ func TestGetRandomJoke(t *testing.T) {
 }
 
 func TestGetJokeByText(t *testing.T) {
+	word := "porcupinetree"
 
 	request := httptest.NewRequest(http.MethodGet,
-		"/jokes/search/{text}", nil)
-	request = mux.SetURLVars(request, map[string]string{"text": "porcupinetree"})
-	responseRecorder := httptest.NewRecorder()
+		"/jokes/search/?text="+word, nil)
 
-	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
-	s := joker.NewServer(logger, mongoStorage)
+	s, rr, logger := Init()
 	h := handlers.RetHandler(logger, s)
 	handlers.HandleRequest(h)
 
-	h.GetJokeByText(responseRecorder, request)
+	h.GetJokeByText(rr, request)
 
-	assert.Equal(t, 404, responseRecorder.Code)
-
-}
-
-func TestAddJoke(t *testing.T) {
-
-	var jsonStr = []byte(`{"title":"Buy cheese and bread for breakfast.",
-							  "body":"And go away","score":1,"id":"7q6w5e"}`)
-	request := httptest.NewRequest(http.MethodPost,
-		"/jokes/", bytes.NewBuffer(jsonStr))
-
-	responseRecorder := httptest.NewRecorder()
-
-	logger := logging.InitZapLog()
-	mongoStorage, _ := mongostorage.NewMongoStorage(logger, "mongodb://localhost:27017")
-	s := joker.NewServer(logger, mongoStorage)
-	h := handlers.RetHandler(logger, s)
-	handlers.HandleRequest(h)
-
-	h.AddJoke(responseRecorder, request)
-	assert.Equal(t, 201, responseRecorder.Code)
+	assert.Equal(t, 404, rr.Code)
 
 }
+
+// func TestAddJoke(t *testing.T) {
+
+// 	var jsonStr = []byte(`{"title":"avadvadv","body":"bbbbb","score":1,"id":"7q6w5e3"}`)
+
+// 	request := httptest.NewRequest(http.MethodPost,
+// 		"/jokes", bytes.NewBuffer(jsonStr))
+
+// 	s, rr, logger := Init()
+// 	h := handlers.RetHandler(logger, s)
+// 	handlers.HandleRequest(h)
+
+// 	h.AddJoke(rr, request)
+// 	assert.Equal(t, 201, rr.Code)
+
+// }

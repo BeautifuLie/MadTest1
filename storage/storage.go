@@ -17,10 +17,10 @@ var ErrNoJokes = errors.New(" No joke in database with such parameters. Create j
 
 type Storage interface {
 	FindID(id string) (model.Joke, error)
-	Fun() ([]model.Joke, error)
-	Random() ([]model.Joke, error)
+	Fun(limit int64) ([]model.Joke, error)
+	Random(limit int) ([]model.Joke, error)
 	TextSearch(text string) ([]model.Joke, error)
 	Save(model.Joke) error
 	UpdateByID(text string, id string) (*mongo.UpdateResult, error)
-	CloseClientDB()
+	CloseClientDB() error
 }

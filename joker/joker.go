@@ -3,8 +3,6 @@ package joker
 import (
 	"errors"
 	"fmt"
-	"math/rand"
-	"net/url"
 	"program/model"
 	"program/storage"
 	"strconv"
@@ -36,81 +34,52 @@ func (s *Server) ID(id string) (model.Joke, error) {
 	return result, nil
 }
 
-func (s *Server) Funniest(m url.Values) ([]model.Joke, error) {
+func (s *Server) Funniest(m string) ([]model.Joke, error) {
+	var n int64
+	a, _ := strconv.Atoi(m)
+	if a == 0 {
+		n = 10
+	} else {
+		n = int64(a)
+	}
 
-	result, err := s.storage.Fun()
-
+	result, err := s.storage.Fun(n)
+	if err != nil {
+		return nil, fmt.Errorf("funniest jokes error%v", err)
+	}
 	if len(result) == 0 {
+
 		return nil, storage.ErrNoJokes
 	}
-
-	count := 0
-	const defaultLimit = 10
-	var v string
-	var a int
-
-	if len(m["limit"]) > 0 {
-		v = m["limit"][0]
-		a, _ = strconv.Atoi(v)
-	}
-	if a > 0 {
-		count = a
-	} else {
-		count = defaultLimit
-	}
-
-	if count > len(result) {
-		return nil, storage.ErrLimitOut
-	}
-	lim := result[:count]
-	if lim != nil {
-		return lim, nil
-	}
-
-	return nil, err
+	return result, nil
 }
 
-func (s *Server) Random(m url.Values) ([]model.Joke, error) {
+func (s *Server) Random(m string) ([]model.Joke, error) {
 
-	res, err := s.storage.Random()
+	var n int
+	a, _ := strconv.Atoi(m)
+	if a == 0 {
+		n = 10
+	} else {
+		n = a
+
+	}
+
+	res, err := s.storage.Random(n)
 
 	if len(res) == 0 {
 		return nil, storage.ErrNoJokes
 	}
 
-	var result []model.Joke
-
-	count := 0
-	const defaultLimit = 10
-	var v string
-	var a int
-
-	if len(m["limit"]) > 0 {
-		v = m["limit"][0]
-		a, _ = strconv.Atoi(v)
+	if err != nil {
+		return nil, fmt.Errorf("random jokes error%v", err)
 	}
-	if a > 0 {
-		count = a
-	} else {
-		count = defaultLimit
+	if len(res) == 0 {
+
+		return nil, storage.ErrNoJokes
 	}
 
-	if count > len(res) {
-		return nil, storage.ErrLimitOut
-	}
-
-	for i := range res {
-		if i < count { //перебирает до указанного "count"
-			a := res[rand.Intn(len(res))]
-			result = append(result, a)
-		}
-	}
-
-	if result != nil {
-		return result, nil
-	}
-
-	return nil, fmt.Errorf("random jokes error%v", err)
+	return res, nil
 }
 
 func (s *Server) Text(text string) ([]model.Joke, error) {
