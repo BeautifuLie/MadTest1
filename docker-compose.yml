@@ -3,13 +3,13 @@ version: '3.8'
 services:
   web:
     restart: always
-    build: ./
+    image: goapp:1.4
     container_name: "web"
 
     ports:
       - "9090:9090"
-    env_file:
-      - .env
+    environment:
+      - "MONGODB_URI=mongodb://db:27017"
     depends_on:
       - db
     networks:
@@ -17,24 +17,15 @@ services:
 
   db:
     restart: always
-    image: mongo:4.2
+    image: mongo:5.0
     container_name: "database"
     volumes:
-      - /home/lafazan/mongodb/data:/home/lafazan/data/db
+      - ~/data7/db:/data/db
     ports:
       - "27017:27017"
     networks:
       - fullstack
 
-  nginx:
-    restart: always
-    image: nginx
-    ports:
-      - "80:80"
-volumes:
-  database_mongo:
-
-    null
 networks:
   fullstack:
     driver: bridge
