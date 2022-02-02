@@ -3,11 +3,16 @@ package joker
 import (
 	"errors"
 	"fmt"
+	"log"
+	"program/auth"
 	"program/model"
 	"program/storage"
 	"strconv"
+	"time"
 
+	"github.com/go-playground/validator"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Server struct {
@@ -116,4 +121,81 @@ func (s *Server) Update(j model.Joke, id string) (model.Joke, error) {
 	}
 
 	return updated, nil
+}
+
+var validate = validator.New()
+
+func (s *Server) SignUpUser(u model.User) error {
+	validationErr := validate.Struct(u)
+	if validationErr != nil {
+
+		return errors.New(" Joker SignUp error")
+	}
+	ok, err := s.storage.IsExists(u)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return err
+	}
+
+	password := HashPassword(u.Password)
+	u.Password = password
+
+	u.Created_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	u.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	// u.ID = primitive.NewObjectID()
+	// u.User_id = user.ID.Hex()
+	token, refreshToken, err := auth.GenerateAllTokens(u.Username)
+	if err != nil {
+		fmt.Println(err)
+	}
+	u.Token = token
+	u.Refresh_token = refreshToken
+	err = s.storage.CreateUser(u)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *Server) LoginUser(u model.User) (string, error) {
+	res, err := s.storage.LoginUser(u)
+	if err != nil {
+		return "", err
+	}
+	passwordIsValid, _ := VerifyPassword(u.Password, res.Password)
+
+	if !passwordIsValid {
+
+		return "", errors.New(" Password error")
+	}
+	token, refreshToken, _ := auth.GenerateAllTokens(res.Username)
+
+	s.storage.UpdateTokens(token, refreshToken, res.Username)
+	return token, nil
+}
+
+//HashPassword is used to encrypt the password before it is stored in the DB
+func HashPassword(password string) string {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14) //hashsalt
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return string(bytes)
+}
+
+//VerifyPassword checks the input password while verifying it with the passward in the DB.
+func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
+	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
+	check := true
+	msg := ""
+
+	if err != nil {
+		msg = fmt.Sprintf("login or passowrd is incorrect")
+		check = false
+	}
+
+	return check, msg
 }

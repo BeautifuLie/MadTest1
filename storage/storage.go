@@ -23,4 +23,12 @@ type Storage interface {
 	Save(model.Joke) error
 	UpdateByID(text string, id string) (*mongo.UpdateResult, error)
 	CloseClientDB() error
+
+	IsExists(model.User) (bool, error)
+	CreateUser(user model.User) error
+	LoginUser(user model.User) (model.User, error)
+	UpdateTokens(signedToken string, signedRefreshToken string, username string) error
 }
+
+// type UserStorage interface {
+// }
