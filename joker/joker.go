@@ -6,25 +6,22 @@ import (
 	"program/model"
 	"program/storage"
 	"strconv"
-
-	"go.uber.org/zap"
 )
 
-type Server struct {
-	logger  *zap.SugaredLogger
+type JokerServer struct {
 	storage storage.Storage
 }
 
-func NewServer(logger *zap.SugaredLogger, storage storage.Storage) *Server {
-	s := &Server{
-		logger:  logger,
+func NewJokerServer(storage storage.Storage) *JokerServer {
+	s := &JokerServer{
+
 		storage: storage,
 	}
 
 	return s
 }
 
-func (s *Server) ID(id string) (model.Joke, error) {
+func (s *JokerServer) ID(id string) (model.Joke, error) {
 
 	result, err := s.storage.FindID(id)
 
@@ -34,7 +31,7 @@ func (s *Server) ID(id string) (model.Joke, error) {
 	return result, nil
 }
 
-func (s *Server) Funniest(m string) ([]model.Joke, error) {
+func (s *JokerServer) Funniest(m string) ([]model.Joke, error) {
 	var n int64
 	a, _ := strconv.Atoi(m)
 	if a == 0 {
@@ -54,7 +51,7 @@ func (s *Server) Funniest(m string) ([]model.Joke, error) {
 	return result, nil
 }
 
-func (s *Server) Random(m string) ([]model.Joke, error) {
+func (s *JokerServer) Random(m string) ([]model.Joke, error) {
 
 	var n int
 	a, _ := strconv.Atoi(m)
@@ -82,7 +79,7 @@ func (s *Server) Random(m string) ([]model.Joke, error) {
 	return res, nil
 }
 
-func (s *Server) Text(text string) ([]model.Joke, error) {
+func (s *JokerServer) Text(text string) ([]model.Joke, error) {
 
 	result, err := s.storage.TextSearch(text)
 	if err != nil {
@@ -93,7 +90,7 @@ func (s *Server) Text(text string) ([]model.Joke, error) {
 
 }
 
-func (s *Server) Add(j model.Joke) (model.Joke, error) {
+func (s *JokerServer) Add(j model.Joke) (model.Joke, error) {
 
 	err := s.storage.Save(j)
 	if err != nil {
@@ -103,7 +100,7 @@ func (s *Server) Add(j model.Joke) (model.Joke, error) {
 	return j, nil
 }
 
-func (s *Server) Update(j model.Joke, id string) (model.Joke, error) {
+func (s *JokerServer) Update(j model.Joke, id string) (model.Joke, error) {
 
 	_, err := s.storage.UpdateByID(j.Body, id)
 	if err != nil {

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -9,23 +10,27 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"program/auth"
 	"program/joker"
 	"program/model"
 	"program/storage"
+	"program/users"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
 type apiHandler struct {
-	Server *joker.Server
-	logger *zap.SugaredLogger
+	JokerServer *joker.JokerServer
+	UserServer  *users.UserServer
+	logger      *zap.SugaredLogger
 }
 
-func RetHandler(logger *zap.SugaredLogger, server *joker.Server) *apiHandler {
+func RetHandler(logger *zap.SugaredLogger, jokerServer *joker.JokerServer, userServer *users.UserServer) *apiHandler {
 	return &apiHandler{
-		Server: server,
-		logger: logger,
+		JokerServer: jokerServer,
+		UserServer:  userServer,
+		logger:      logger,
 	}
 }
 
@@ -43,7 +48,7 @@ func LoggingMiddleware(logger *zap.SugaredLogger) mux.MiddlewareFunc {
 				"url", r.URL,
 				"duration", time.Since(s),
 				"code", rr.Code,
-				// "response", rr.Body.String()
+				// "response", rr.Body.String(),
 			)
 
 			w.WriteHeader(rr.Code)
@@ -56,22 +61,189 @@ func LoggingMiddleware(logger *zap.SugaredLogger) mux.MiddlewareFunc {
 
 }
 
-func HandleRequest(h *apiHandler) *mux.Router {
-	myRouter := mux.NewRouter()
+func JwtVerify(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		clientToken := r.Header.Get("Authorization")
 
-	myRouter.Use(LoggingMiddleware(h.logger))
-	myRouter.HandleFunc("/jokes", h.homePage).Methods(http.MethodGet)
-	myRouter.HandleFunc("/jokes/funniest", h.GetFunniestJokes).Methods(http.MethodGet)
-	myRouter.HandleFunc("/jokes/random", h.GetRandomJoke).Methods(http.MethodGet)
-	myRouter.HandleFunc("/jokes", h.AddJoke).Methods(http.MethodPost)
-	myRouter.HandleFunc("/jokes/{id}", h.UpdateJoke).Methods(http.MethodPut)
-	myRouter.HandleFunc("/jokes/", h.GetJokeByID).Methods(http.MethodGet)
-	myRouter.HandleFunc("/jokes/search/", h.GetJokeByText).Methods(http.MethodGet)
+		if clientToken == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, "Token is empty", http.StatusUnauthorized)
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
 
-	return myRouter
+		claims, err := auth.ValidateToken(clientToken)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, "Token not valid", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "username", claims.Username)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+
+	})
 }
+
+func HandleRequest(h *apiHandler) *mux.Router {
+	r := mux.NewRouter()
+
+	r.Use(LoggingMiddleware(h.logger))
+
+	r.HandleFunc("/", h.IndexPage).Methods(http.MethodGet)
+	r.HandleFunc("/signup", h.SignUpPage).Methods(http.MethodGet)
+	r.HandleFunc("/login", h.LoginPage).Methods(http.MethodGet)
+	r.HandleFunc("/signup", h.CreateUser).Methods(http.MethodPost)
+	r.HandleFunc("/login", h.Login).Methods(http.MethodPost)
+
+	s := r.PathPrefix("/").Subrouter()
+
+	s.Use(JwtVerify)
+
+	s.HandleFunc("/api", h.homePage).Methods(http.MethodGet)
+	s.HandleFunc("/api/jokes/funniest", h.GetFunniestJokes).Methods(http.MethodGet)
+	s.HandleFunc("/api/jokes/random", h.GetRandomJoke).Methods(http.MethodGet)
+	s.HandleFunc("/api/jokes", h.AddJoke).Methods(http.MethodPost)
+	s.HandleFunc("/api/jokes/{id}", h.UpdateJoke).Methods(http.MethodPut)
+	s.HandleFunc("/api/jokes/", h.GetJokeByID).Methods(http.MethodGet)
+	s.HandleFunc("/api/jokes/search/", h.GetJokeByText).Methods(http.MethodGet)
+
+	return r
+}
+
+func (h *apiHandler) IndexPage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "index.html")
+}
+
 func (h *apiHandler) homePage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "main_page.html")
+}
+
+func (h *apiHandler) SignUpPage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "sign_page.html")
+}
+func (h *apiHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "login_page.html")
+}
+func (h *apiHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+
+	var u model.User
+	contentType := r.Header.Get("Content-type")
+
+	if contentType == "application/json" {
+		err := json.NewDecoder(io.LimitReader(r.Body, 4*1024)).Decode(&u)
+		if err != nil {
+			h.logger.Errorw("AddUser error",
+				"error", err,
+				"text", r.Body)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+	} else {
+		r.Body = http.MaxBytesReader(w, r.Body, 4*1024)
+		err := r.ParseForm()
+		if err != nil {
+			h.logger.Errorw("AddJoke error",
+				"error", err,
+				"text", r.Body)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		u.Username = r.PostFormValue("username")
+		u.Password = r.PostFormValue("password")
+
+	}
+	err := model.User.ValidateUser(u)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		h.logger.Error("AddUser error ",
+			"validation error:", err)
+		_ = json.NewEncoder(w).Encode(serverError{
+			Code:        "validation_err",
+			Description: err.Error(),
+		})
+
+		return
+	}
+	err = h.UserServer.SignUpUser(u)
+	if err != nil {
+		h.logger.Errorw("Create user error",
+			"error", err,
+		)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	w.Write([]byte("User created"))
+
+}
+
+func (h *apiHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var u model.User
+
+	contentType := r.Header.Get("Content-type")
+
+	if contentType == "application/json" {
+		err := json.NewDecoder(io.LimitReader(r.Body, 4*1024)).Decode(&u)
+		if err != nil {
+			h.logger.Errorw("Login json error",
+				"error", err,
+				"text", r.Body)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+	} else {
+		r.Body = http.MaxBytesReader(w, r.Body, 4*1024)
+		err := r.ParseForm()
+		if err != nil {
+			h.logger.Errorw("AddJoke text error",
+				"error", err,
+				"text", r.Body)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		u.Username = r.PostFormValue("username")
+		u.Password = r.PostFormValue("password")
+
+	}
+	_, err := h.UserServer.LoginUser(u)
+	if err != nil {
+		h.logger.Errorw("Login error",
+			"error", err,
+		)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Create a new request using http
+	// url := "http://localhost:9090/auth/api"
+	// req, err := http.NewRequest("GET", url, nil)
+	// if err != nil {
+	// 	log.Println("request error", err)
+	// }
+	// // add authorization header to the req
+	// req.Header.Add("Authorization", token)
+
+	// // Send req using http Client
+	// client := &http.Client{}
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	log.Println("Error on response.\n[ERROR] -", err)
+	// }
+	// defer resp.Body.Close()
+
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	log.Println("Error while reading the response bytes:", err)
+	// }
+	// log.Println(string([]byte(body)))
+
 }
 
 func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +252,7 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 	if id == "" {
 		json.NewEncoder(w).Encode("id field is empty - type id value")
 	}
-	res, err := h.Server.ID(id)
+	res, err := h.JokerServer.ID(id)
 
 	if err != nil {
 		h.logger.Infow("GetJokeByID ",
@@ -103,7 +275,7 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 
 	limit := r.FormValue("limit")
 
-	res, err := h.Server.Funniest(limit)
+	res, err := h.JokerServer.Funniest(limit)
 
 	if err != nil {
 
@@ -125,7 +297,7 @@ func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 
 	limit := r.FormValue("limit")
-	res, err := h.Server.Random(limit)
+	res, err := h.JokerServer.Random(limit)
 	if err != nil {
 
 		h.respondError(err, w, r)
@@ -146,7 +318,7 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 
 	text := r.URL.Query().Get("text")
 
-	res, err := h.Server.Text(text)
+	res, err := h.JokerServer.Text(text)
 	if err != nil {
 		h.logger.Errorw("GetJokeByText error",
 			"text", text)
@@ -208,7 +380,7 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	res, err1 := h.Server.Add(j)
+	res, err1 := h.JokerServer.Add(j)
 	if err1 != nil {
 		h.logger.Errorw("AddJoke error",
 			"error", err1)
@@ -252,7 +424,7 @@ func (h *apiHandler) UpdateJoke(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	res, err := h.Server.Update(j, id)
+	res, err := h.JokerServer.Update(j, id)
 	if err != nil {
 		h.logger.Errorw("UpdateJoke  error",
 			"error", err)
@@ -289,6 +461,15 @@ func (h *apiHandler) respondError(err error, w http.ResponseWriter, r *http.Requ
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if errors.Is(err, storage.ErrNoJokes) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if errors.Is(err, storage.ErrPasswordInvalid) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if errors.Is(err, storage.ErrPasswordMinLimit) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if errors.Is(err, storage.ErrUserValidate) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else {
