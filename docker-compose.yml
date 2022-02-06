@@ -1,15 +1,28 @@
 version: '3.8'
 
 services:
-  web:
+  goservice:
     restart: always
     build: ./
     container_name: "web"
 
     ports:
-      - "9090:9090"
-    env_file:
-      - .env
+      - "9090"
+    environment:
+      - "MONGODB_URI=mongodb://db:27017"
+    depends_on:
+      - db
+    networks:
+      - fullstack
+  goservice1:
+    restart: always
+    build: /home/denys/go/src/JokesApp_SecondVersion_copy
+    container_name: "web111"
+
+    ports:
+      - "8080"
+    environment:
+      - "MONGODB_URI=mongodb://db:27017"
     depends_on:
       - db
     networks:
@@ -17,24 +30,28 @@ services:
 
   db:
     restart: always
-    image: mongo:4.2
+    image: mongo:5.0
     container_name: "database"
     volumes:
-      - /home/lafazan/mongodb/data:/home/lafazan/data/db
+      - ~/data7/db:/data/db
     ports:
       - "27017:27017"
     networks:
       - fullstack
-
   nginx:
-    restart: always
-    image: nginx
+    build: "./nginx"
+
+    container_name: "nginx"
+
+    depends_on:
+      - "goservice"
     ports:
       - "80:80"
-volumes:
-  database_mongo:
+      #- "443:443"
+    restart: unless-stopped
+    networks:
+      - fullstack
 
-    null
 networks:
   fullstack:
     driver: bridge

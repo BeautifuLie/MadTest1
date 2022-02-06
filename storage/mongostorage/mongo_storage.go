@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"program/model"
 	"time"
 
@@ -192,20 +191,20 @@ func (ms *MongoStorage) CloseClientDB() error {
 	return nil
 }
 
-func (ms *MongoStorage) IsExists(user model.User) (bool, error) {
+func (ms *MongoStorage) IsExists(user model.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	count, err := ms.collectionUsers.CountDocuments(ctx, bson.M{"username": user.Username})
 	defer cancel()
 	if err != nil {
 
-		return true, err
+		return err
 	}
 
 	if count > 0 {
 
-		return true, errors.New("this username already exists")
+		return errors.New("this username already exists")
 	}
-	return false, nil
+	return nil
 }
 
 func (ms *MongoStorage) CreateUser(user model.User) error {
@@ -226,8 +225,7 @@ func (ms *MongoStorage) LoginUser(user model.User) (model.User, error) {
 
 	if err != nil {
 
-		if err == mongo.ErrNoDocuments {
-
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return model.User{}, mongo.ErrNoDocuments
 		}
 		return model.User{}, fmt.Errorf("failed to execute query,error:%w", err)
@@ -236,14 +234,17 @@ func (ms *MongoStorage) LoginUser(user model.User) (model.User, error) {
 }
 func (ms *MongoStorage) UpdateTokens(signedToken string, signedRefreshToken string, username string) error {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-
+	defer cancel()
 	var updateObj primitive.D
 
-	updateObj = append(updateObj, bson.E{"token", signedToken})
-	updateObj = append(updateObj, bson.E{"refresh_token", signedRefreshToken})
+	updateObj = append(updateObj, bson.E{Key: "token", Value: signedToken})
+	updateObj = append(updateObj, bson.E{Key: "refresh_token", Value: signedRefreshToken})
 
-	Updated_at, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	updateObj = append(updateObj, bson.E{"updated_at", Updated_at})
+	Updated_at, err := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	if err != nil {
+		return err
+	}
+	updateObj = append(updateObj, bson.E{Key: "updated_at", Value: Updated_at})
 
 	upsert := true
 	filter := bson.M{"username": username}
@@ -251,18 +252,17 @@ func (ms *MongoStorage) UpdateTokens(signedToken string, signedRefreshToken stri
 		Upsert: &upsert,
 	}
 
-	_, err := ms.collectionUsers.UpdateOne(
+	_, err = ms.collectionUsers.UpdateOne(
 		ctx,
 		filter,
 		bson.D{
-			{"$set", updateObj},
+			{Key: "$set", Value: updateObj},
 		},
 		&opt,
 	)
-	defer cancel()
 
 	if err != nil {
-		log.Panic(err)
+
 		return err
 	}
 

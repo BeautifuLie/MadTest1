@@ -9,6 +9,7 @@ import (
 	"program/joker"
 	"program/logging"
 	"program/storage/mongostorage"
+	"program/users"
 	"syscall"
 	"time"
 
@@ -24,9 +25,10 @@ func main() {
 		logger.Errorw("Error during connect...", "error", err)
 	}
 
-	server := joker.NewServer(logger, mongoStorage)
+	jokerServer := joker.NewJokerServer(mongoStorage)
+	userServer := users.NewUserServer(mongoStorage)
 
-	myRouter := handlers.HandleRequest(handlers.RetHandler(logger, server))
+	myRouter := handlers.HandleRequest(handlers.RetHandler(logger, jokerServer, userServer))
 
 	s := http.Server{
 		Addr:         ":9090",
