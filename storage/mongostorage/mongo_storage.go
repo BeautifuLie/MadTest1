@@ -208,9 +208,9 @@ func (ms *MongoStorage) IsExists(user model.User) error {
 }
 
 func (ms *MongoStorage) CreateUser(user model.User) error {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	_, insertErr := ms.collectionUsers.InsertOne(ctx, user)
-
+	defer cancel()
 	if insertErr != nil {
 
 		return insertErr
@@ -219,10 +219,10 @@ func (ms *MongoStorage) CreateUser(user model.User) error {
 }
 
 func (ms *MongoStorage) LoginUser(user model.User) (model.User, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var foundUser model.User
 	err := ms.collectionUsers.FindOne(ctx, bson.M{"username": user.Username}).Decode(&foundUser)
-
+	defer cancel()
 	if err != nil {
 
 		if errors.Is(err, mongo.ErrNoDocuments) {

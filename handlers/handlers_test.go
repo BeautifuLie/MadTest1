@@ -31,9 +31,8 @@ func Init() (*users.UserServer, *joker.JokerServer, *httptest.ResponseRecorder, 
 func TestGetJokeByID(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet,
-		"/jokes/?id=4xjyho123", nil)
+		"/jokes/?id=4xjyho1232", nil)
 
-	fmt.Println(request)
 	user, serv, resp, log := Init()
 	h := handlers.RetHandler(log, serv, user)
 	handlers.HandleRequest(h)
@@ -102,26 +101,3 @@ func TestGetJokeByText(t *testing.T) {
 	assert.Equal(t, 404, rr.Code)
 
 }
-
-// func TestAddJoke(t *testing.T) {
-// 	// var j model.Joke
-// 	// j.Body = "bbbbbb"
-// 	// j.ID = "7q6w5e3"
-// 	// j.Score = 1
-// 	// j.Title = "avadvadv"
-
-// 	// b, _ := json.Marshal(j)
-// 	var jsonStr = []byte(`{"title":"Buy cheese and bread for breakfast.",
-// 							  "body":"And go away","score":1,"id":"7q6w5e"}`)
-
-// 	request := httptest.NewRequest(http.MethodPost,
-// 		"/jokes", bytes.NewBuffer(jsonStr))
-
-// 	user, s, rr, logger := Init()
-// 	h := handlers.RetHandler(logger, s, user)
-// 	handlers.HandleRequest(h)
-// 	// fmt.Println(string(b))
-// 	h.AddJoke(rr, request)
-// 	assert.Equal(t, 201, rr.Code)
-
-// }
