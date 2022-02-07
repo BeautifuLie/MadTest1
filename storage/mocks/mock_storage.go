@@ -137,3 +137,83 @@ func (mr *MockStorageMockRecorder) UpdateByID(text, id interface{}) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateByID", reflect.TypeOf((*MockStorage)(nil).UpdateByID), text, id)
 }
+
+// MockUserStorage is a mock of UserStorage interface.
+type MockUserStorage struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserStorageMockRecorder
+}
+
+// MockUserStorageMockRecorder is the mock recorder for MockUserStorage.
+type MockUserStorageMockRecorder struct {
+	mock *MockUserStorage
+}
+
+// NewMockUserStorage creates a new mock instance.
+func NewMockUserStorage(ctrl *gomock.Controller) *MockUserStorage {
+	mock := &MockUserStorage{ctrl: ctrl}
+	mock.recorder = &MockUserStorageMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserStorage) EXPECT() *MockUserStorageMockRecorder {
+	return m.recorder
+}
+
+// CreateUser mocks base method.
+func (m *MockUserStorage) CreateUser(user model.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockUserStorageMockRecorder) CreateUser(user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserStorage)(nil).CreateUser), user)
+}
+
+// IsExists mocks base method.
+func (m *MockUserStorage) IsExists(arg0 model.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsExists", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IsExists indicates an expected call of IsExists.
+func (mr *MockUserStorageMockRecorder) IsExists(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExists", reflect.TypeOf((*MockUserStorage)(nil).IsExists), arg0)
+}
+
+// LoginUser mocks base method.
+func (m *MockUserStorage) LoginUser(user model.User) (model.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoginUser", user)
+	ret0, _ := ret[0].(model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoginUser indicates an expected call of LoginUser.
+func (mr *MockUserStorageMockRecorder) LoginUser(user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginUser", reflect.TypeOf((*MockUserStorage)(nil).LoginUser), user)
+}
+
+// UpdateTokens mocks base method.
+func (m *MockUserStorage) UpdateTokens(signedToken, signedRefreshToken, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTokens", signedToken, signedRefreshToken, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTokens indicates an expected call of UpdateTokens.
+func (mr *MockUserStorageMockRecorder) UpdateTokens(signedToken, signedRefreshToken, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTokens", reflect.TypeOf((*MockUserStorage)(nil).UpdateTokens), signedToken, signedRefreshToken, username)
+}
