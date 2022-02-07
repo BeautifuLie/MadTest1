@@ -11,11 +11,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func TestNewMongoStorage(t *testing.T) {
+
+	var _, err = mongostorage.NewMongoStorage("mongodb://localhost:27018")
+	require.Error(t, err)
+
+}
 func Col() *mongostorage.MongoStorage {
 
 	var ms, _ = mongostorage.NewMongoStorage("mongodb://localhost:27017")
 	return ms
 }
+
 func TestFindID(t *testing.T) {
 	ms := Col()
 	var j = model.Joke{
@@ -154,5 +161,16 @@ func TestRandom(t *testing.T) {
 		assert.Equal(t, 0, len(res))
 
 	})
+
+}
+func TestUpdateTOkens(t *testing.T) {
+	ms := Col()
+	var u model.User
+	u.Username = "D"
+	token := "123"
+	refreshToken := "1234"
+
+	err := ms.UpdateTokens(token, refreshToken, u.Username)
+	require.NoError(t, err)
 
 }
