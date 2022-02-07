@@ -8,7 +8,8 @@ import (
 )
 
 ////go:generate  go run github.com/golang/mock/mockgen -source storage.go -destination mocks/mock_storage.go -package mocks
-//go:generate  mockgen  -destination=./mock/mock_storage.go -package=mocks . Storage
+//go:generate  go run github.com/golang/mock/mockgen -source storage.go -destination mocks/mock_storage.go -package mocks
+////go:generate  mockgen  -destination=./mock/mock_storage.go -package=mocks . Storage
 
 //Errors
 var ErrNoMatches = errors.New(" No matches")

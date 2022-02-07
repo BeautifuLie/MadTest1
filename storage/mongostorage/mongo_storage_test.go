@@ -55,12 +55,12 @@ func TestUpdateByID(t *testing.T) {
 	ms := Col()
 	var j = model.Joke{
 		Body: "updaaat4e v.2",
-		ID:   "5sfp26",
+		ID:   "1234",
 	}
 
 	res, err := ms.UpdateByID(j.Body, j.ID)
 	require.NoError(t, err)
-	assert.Equal(t, res.ModifiedCount, int64(1))
+	assert.NotEqual(t, res.ModifiedCount, int64(1))
 
 	var j2 = model.Joke{
 		Body: "upd v.7",

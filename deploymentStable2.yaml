@@ -1,0 +1,37 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: go-deployment
+spec:
+  selector:
+    matchLabels:
+      app: go-app
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: go-app
+    spec:
+      containers:
+      - name: go-app
+        image: registry.digitalocean.com/go-app/goapp:1.4
+        
+        env:
+        - name: MONGODB_URI
+          valueFrom:
+           configMapKeyRef:
+            name: cfg
+            key: service.ip
+      dnsPolicy: Default  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-app-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 9090
+    targetPort: 9090
+  selector:
+    app: go-app
