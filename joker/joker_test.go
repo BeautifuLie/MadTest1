@@ -2,7 +2,6 @@ package joker_test
 
 import (
 	"program/joker"
-	"program/logging"
 	"program/model"
 	"program/storage"
 	mocks "program/storage/mocks"
@@ -25,8 +24,7 @@ func TestID(t *testing.T) {
 
 	store.EXPECT().FindID("test").Return(j, nil)
 
-	logger := logging.InitZapLog()
-	s := joker.NewServer(logger, store)
+	s := joker.NewJokerServer(store)
 	got, err := s.ID("test")
 
 	require.NoError(t, err)
@@ -54,8 +52,7 @@ func TestFunniest(t *testing.T) {
 	lim := int64(2)
 	store.EXPECT().Fun(lim).Return(j, nil)
 
-	logger := logging.InitZapLog()
-	s := joker.NewServer(logger, store)
+	s := joker.NewJokerServer(store)
 
 	m := "2"
 	got, err := s.Funniest(m)
@@ -103,8 +100,7 @@ func TestText(t *testing.T) {
 
 	store.EXPECT().TextSearch("jira").Return(j, nil).Times(1)
 
-	logger := logging.InitZapLog()
-	s := joker.NewServer(logger, store)
+	s := joker.NewJokerServer(store)
 	got, err := s.Text("jira")
 
 	require.NoError(t, err)
@@ -119,8 +115,8 @@ func TestAdd(t *testing.T) {
 	j := model.Joke{Title: "fawfaw", Body: "haha", ID: "1q2w3e", Score: 1}
 
 	store.EXPECT().Save(j).Return(nil)
-	logger := logging.InitZapLog()
-	s := joker.NewServer(logger, store)
+
+	s := joker.NewJokerServer(store)
 	_, err := s.Add(j)
 	require.NoError(t, err)
 
@@ -133,8 +129,8 @@ func TestUpdateB(t *testing.T) {
 	j := model.Joke{Title: "fawfaw", Body: "tratata", ID: "1q2w3e", Score: 1}
 	a := &mongo.UpdateResult{}
 	store.EXPECT().UpdateByID(j.Body, j.ID).Return(a, storage.ErrNoJokes)
-	logger := logging.InitZapLog()
-	s := joker.NewServer(logger, store)
+
+	s := joker.NewJokerServer(store)
 	_, err := s.Update(j, j.ID)
 	require.Error(t, err)
 

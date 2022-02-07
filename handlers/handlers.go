@@ -221,29 +221,6 @@ func (h *apiHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a new request using http
-	// url := "http://localhost:9090/auth/api"
-	// req, err := http.NewRequest("GET", url, nil)
-	// if err != nil {
-	// 	log.Println("request error", err)
-	// }
-	// // add authorization header to the req
-	// req.Header.Add("Authorization", token)
-
-	// // Send req using http Client
-	// client := &http.Client{}
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	log.Println("Error on response.\n[ERROR] -", err)
-	// }
-	// defer resp.Body.Close()
-
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	log.Println("Error while reading the response bytes:", err)
-	// }
-	// log.Println(string([]byte(body)))
-
 }
 
 func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
