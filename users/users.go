@@ -70,6 +70,9 @@ func (s *UserServer) LoginUser(u model.User) (string, error) {
 		return "", err
 	}
 
-	s.storage.UpdateTokens(token, refreshToken, res.Username)
+	err = s.storage.UpdateTokens(token, refreshToken, res.Username)
+	if err != nil {
+		return "", err
+	}
 	return token, nil
 }

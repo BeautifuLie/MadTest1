@@ -18,9 +18,12 @@ import (
 
 func main() {
 	logger := logging.InitZapLog()
-	godotenv.Load(".env")
+	err := godotenv.Load(".env")
+	if err != nil {
+		logger.Errorw("Error during load environments", "error", err)
+	}
 
-	mongoStorage, err := mongostorage.NewMongoStorage("mongodb://localhost:27017")
+	mongoStorage, err := mongostorage.NewMongoStorage(os.Getenv("MONGODB_URI"))
 	if err != nil {
 		logger.Errorw("Error during connect...", "error", err)
 	}

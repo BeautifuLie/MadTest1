@@ -91,10 +91,14 @@ func (s *JokerServer) Text(text string) ([]model.Joke, error) {
 }
 
 func (s *JokerServer) Add(j model.Joke) (model.Joke, error) {
-
-	err := s.storage.Save(j)
+	_, err := s.storage.FindID(j.ID)
 	if err != nil {
-		return model.Joke{}, errors.New("error writing file")
+		err = s.storage.Save(j)
+		if err != nil {
+			return model.Joke{}, errors.New("error writing file")
+		}
+	} else {
+		return model.Joke{}, errors.New(" Joke with that ID already exists")
 	}
 
 	return j, nil

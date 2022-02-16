@@ -108,20 +108,6 @@ func TestText(t *testing.T) {
 
 }
 
-func TestAdd(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	store := mocks.NewMockStorage(ctrl)
-
-	j := model.Joke{Title: "fawfaw", Body: "haha", ID: "1q2w3e", Score: 1}
-
-	store.EXPECT().Save(j).Return(nil)
-
-	s := joker.NewJokerServer(store)
-	_, err := s.Add(j)
-	require.NoError(t, err)
-
-}
-
 func TestUpdateB(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := mocks.NewMockStorage(ctrl)
