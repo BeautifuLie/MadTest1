@@ -2,34 +2,38 @@ package mongostorage_test
 
 import (
 	"errors"
+	"math/rand"
+	"os"
 	"program/model"
 	"program/storage/mongostorage"
+	"program/testdb"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func TestNewMongoStorage(t *testing.T) {
-
-	var _, err = mongostorage.NewMongoStorage("mongodb://localhost:27018")
-	require.Error(t, err)
-
+func init() {
+	file := "../../reddit_jokes.json"
+	testdb.TestDB(file)
 }
-func Col() *mongostorage.MongoStorage {
 
-	var ms, _ = mongostorage.NewMongoStorage("mongodb://localhost:27017")
+func initConnection() *mongostorage.MongoStorage {
+
+	var ms, _ = mongostorage.NewMongoStorage(os.Getenv("MONGODB_URI"))
 	return ms
 }
 
 func TestFindID(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 	var j = model.Joke{
-		Title: "Breaking News: Bill Gates has agreed to pay for Trump's wall",
-		Body:  "On the condition he gets to install windows.\n\n\n",
-		Score: 48526,
-		ID:    "5tn84z",
+		Title: "What's the difference between a Jew in Nazi Germany and pizza ?",
+		Body:  "Pizza doesn't scream when you put it in the oven .\n\nI'm so sorry.",
+		Score: 0,
+		ID:    "5tz4dd",
 	}
 	var e = model.Joke{
 		Title: "",
@@ -46,7 +50,7 @@ func TestFindID(t *testing.T) {
 	})
 	t.Run("IDexists", func(t *testing.T) {
 
-		res, err := ms.FindID("5tn84z")
+		res, err := ms.FindID("5tz4dd")
 		require.NoError(t, err)
 		assert.Equal(t, j, res)
 	})
@@ -54,9 +58,9 @@ func TestFindID(t *testing.T) {
 }
 
 func TestFun(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 	var limit int64
-	var j = "On the condition he gets to install windows.\n\n\n"
+	var j = "Plagiarism. "
 
 	res, _ := ms.Fun(limit)
 	r := res[0]
@@ -65,7 +69,7 @@ func TestFun(t *testing.T) {
 }
 
 func TestTextS(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 	var s = "porcupinetree"
 
 	_, err := ms.TextSearch(s)
@@ -75,10 +79,15 @@ func TestTextS(t *testing.T) {
 }
 
 func TestUpdateByID(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
+	letters := "abcd"
+	rand.Seed(time.Now().UnixNano())
+	rand := strconv.Itoa(rand.Intn(1000) + 1)
+	body := letters + string(rand)
+
 	var j = model.Joke{
-		Body: "updaaat4e v.2",
-		ID:   "1234",
+		Body: body,
+		ID:   "5tz1o1",
 	}
 	var j2 = model.Joke{
 		Body: "upd v.7",
@@ -88,20 +97,21 @@ func TestUpdateByID(t *testing.T) {
 
 		res, err := ms.UpdateByID(j.Body, j.ID)
 		require.NoError(t, err)
-		assert.NotEqual(t, res.ModifiedCount, int64(1))
+		assert.Equal(t, int64(1), res.ModifiedCount)
+
 	})
 
 	t.Run("NoID", func(t *testing.T) {
 
 		res, err := ms.UpdateByID(j2.Body, j2.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, res.ModifiedCount, int64(0))
+		assert.Equal(t, int64(0), res.ModifiedCount)
 	})
 
 }
 
 func TestLogin(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 	var u model.User
 	t.Run("NoUser", func(t *testing.T) {
 		u.Username = "zxc"
@@ -118,7 +128,7 @@ func TestLogin(t *testing.T) {
 
 }
 func TestIsExists(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 	var u model.User
 	noExist := errors.New("this username already exists")
 	t.Run("NoUser", func(t *testing.T) {
@@ -137,7 +147,7 @@ func TestIsExists(t *testing.T) {
 
 }
 func TestCreateUser(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 	var u model.User
 
 	u.Username = "Denyska"
@@ -146,7 +156,7 @@ func TestCreateUser(t *testing.T) {
 
 }
 func TestRandom(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 
 	t.Run("RandomPositiveLimit", func(t *testing.T) {
 		limit := 5
@@ -164,7 +174,7 @@ func TestRandom(t *testing.T) {
 
 }
 func TestUpdateTOkens(t *testing.T) {
-	ms := Col()
+	ms := initConnection()
 	var u model.User
 	u.Username = "D"
 	token := "123"

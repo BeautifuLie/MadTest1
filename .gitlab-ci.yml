@@ -1,0 +1,39 @@
+image: golang:1.17.5-alpine
+
+stages: 
+          
+  - lint
+  - test
+  
+
+services:
+  - mongo
+variables:
+  MONGODB_URI: "mongodb://mongo:27017"
+
+.go-cache:
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  before_script:
+    - mkdir -p .go
+  cache:
+    paths:
+      - .go/pkg/mod/
+
+lint-job:
+  stage: lint
+  image: golangci/golangci-lint:v1.43.0
+  script:
+      - golangci-lint run -v  
+  only:
+    - master     
+
+test-job:
+  extends: .go-cache
+  stage: test
+  script:
+      - CGO_ENABLED=0 go test -cover ./...
+  only:
+    - merge_requests
+    - master
+          
