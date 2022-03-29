@@ -27,7 +27,9 @@ func (s *UserServer) SignUpUser(u model.User) error {
 	if validationErr != nil {
 		return storage.ErrPasswordMinLimit
 	}
+
 	err := s.storage.IsExists(u)
+
 	if err != nil {
 		return err
 	}
@@ -40,7 +42,6 @@ func (s *UserServer) SignUpUser(u model.User) error {
 
 	u.Created_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	u.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	// u.ID = primitive.NewObjectID()
 
 	token, refreshToken, err := auth.GenerateAllTokens(u.Username)
 	if err != nil {
@@ -48,10 +49,12 @@ func (s *UserServer) SignUpUser(u model.User) error {
 	}
 	u.Token = token
 	u.Refresh_token = refreshToken
+
 	err = s.storage.CreateUser(u)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 func (s *UserServer) LoginUser(u model.User) (string, error) {
@@ -75,4 +78,11 @@ func (s *UserServer) LoginUser(u model.User) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+func (s *UserServer) UsersWithoutJokes() ([]string, error) {
+	res, err := s.storage.UsersWithoutJokes()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

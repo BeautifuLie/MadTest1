@@ -5,10 +5,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"program/awslogic"
 	"program/handlers"
 	"program/joker"
 	"program/logging"
+	"program/storage/awsstorage"
 	"program/storage/mongostorage"
+	"program/storage/sqlstorage"
 	"program/users"
 	"syscall"
 	"time"
@@ -26,12 +29,32 @@ func main() {
 	mongoStorage, err := mongostorage.NewMongoStorage(os.Getenv("MONGODB_URI"))
 	if err != nil {
 		logger.Errorw("Error during connect...", "error", err)
+	} else {
+		logger.Info("Connected to MongoDB database")
 	}
 
-	jokerServer := joker.NewJokerServer(mongoStorage)
-	userServer := users.NewUserServer(mongoStorage)
+	sqlStorage, err := sqlstorage.NewSqlStorage(os.Getenv("MYSQL_URI"))
+	if err != nil {
+		logger.Errorw("Error during connect SQL database", "error", err)
+	} else {
+		logger.Info("Connected to MYSQL database")
+	}
 
-	myRouter := handlers.HandleRequest(handlers.RetHandler(logger, jokerServer, userServer))
+	awsstor, err := awsstorage.NewAwsStorage(
+		os.Getenv("AWS_REGION"),
+		os.Getenv("AWS_ACCESS_KEY_ID"),
+		os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		"")
+	if err != nil {
+		logger.Errorw("Error during connect to AWS services", "error", err)
+	} else {
+		logger.Info("Connected to AWS services")
+	}
+	jokerServer := joker.NewJokerServer(sqlStorage)
+	userServer := users.NewUserServer(sqlStorage)
+	awsServer := awslogic.NewAwsServer(awsstor)
+
+	myRouter := handlers.HandleRequest(handlers.RetHandler(logger, jokerServer, userServer, awsServer))
 
 	s := http.Server{
 		Addr:         ":9090",

@@ -45,6 +45,41 @@
     <br>
 
 
+    <form action="api/users/withoutjokes" method="GET">
+        <input type="submit" value="Users without jokes" />
+    </form>
+
+    <br>
+    <br>
+    <form action="api/jokes/month/" method="GET">
+        <input type="text" name="month" placeholder="month" /> <br />
+        <input type="submit" value="number of jokes in a given month" />
+    </form>
+    <br>
+    <form action="api/jokes/count/" method="GET">
+        Year : <input type='text' name='year' placeholder="type year" /> <br />
+        Count greater then: <input type='text' name='count' placeholder="type count" /> <br />
+
+        <input type="submit" value="Month and Count" />
+    </form>
+    <br>
+    <br>
+    <form action="api/report" method="GET">
+        <input type="submit" value="Get report" />
+    </form>
+    <form action="api/send" method="GET">
+        <input type="submit" value="Send to queue" />
+    </form>
+    <form action="api/recieve" method="GET">
+        <input type="submit" value="Get message from queue" />
+    </form>
+    <br>
+    <br>
+    <form action="api/delete">
+        <input type="text" name="handle" placeholder="handle" /> <br />
+        <button>Delete Message</button>
+    </form>
+    <br>
 </body>
 
 </html>

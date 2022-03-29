@@ -10,19 +10,23 @@ import (
 )
 
 type Joke struct {
-	Title string `json:"title" bson:"title"`
-	Body  string `json:"body" bson:"body"`
-	Score int    `json:"score" bson:"score"`
-	ID    string `json:"id" bson:"id"`
+	Title      string    `json:"title" bson:"title"`
+	Body       string    `json:"body" bson:"body"`
+	Score      int       `json:"score" bson:"score"`
+	ID         string    `json:"id" bson:"id"`
+	Created_at time.Time `json:"created_at"`
 }
 type User struct {
-	// ID       primitive.ObjectID `bson:_id`
-	Username      string    `json:"username" bson:"username"`
-	Password      string    `json:"password" bson:"password" validate:"required,min=6"`
-	Token         string    `json:"token" bson:"token"`
-	Refresh_token string    `json:"refresh_token" bson:"refresh_token"`
+	Username      string    `json:"username" `
+	Password      string    `json:"password"  validate:"required,min=6"`
+	Token         string    `json:"token" `
+	Refresh_token string    `json:"refresh_token" `
 	Created_at    time.Time `json:"created_at"`
 	Updated_at    time.Time `json:"updated_at"`
+}
+type Report struct {
+	Month string `json:"month" `
+	Count string `json:"count" `
 }
 
 func (j Joke) Validate() error {
