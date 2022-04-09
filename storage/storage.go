@@ -46,7 +46,7 @@ type AWSfuncs interface {
 	UploadTos3(j model.Joke) error
 	ReadS3LambdaReport() ([]byte, error)
 	GetQueueUrl(queueName string) (string, error)
-	SendMsg(id string) (string, error)
+	SendMsg(j model.Joke) (string, error)
 	GetMsg() (*sqs.ReceiveMessageOutput, error)
 	DeleteMsg(messageHandle string) error
 	UploadMessageTos3(filename string) error

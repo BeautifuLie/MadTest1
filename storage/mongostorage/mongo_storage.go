@@ -268,3 +268,12 @@ func (ms *MongoStorage) UpdateTokens(signedToken string, signedRefreshToken stri
 
 	return nil
 }
+func (ms *MongoStorage) MonthAndCount(year, count int) (int, int, error) {
+	return -1, -1, fmt.Errorf("not implemented")
+}
+func (ms *MongoStorage) JokesByMonth(monthNumber int) (int, error) {
+	return -1, fmt.Errorf("not implemented")
+}
+func (ms *MongoStorage) UsersWithoutJokes() ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}

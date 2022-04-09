@@ -124,69 +124,12 @@ func HandleRequest(h *apiHandler) *mux.Router {
 	s.HandleFunc("/api/jokes/count/", h.MonthAndCount).Methods(http.MethodGet)
 	s.HandleFunc("/api/users/withoutjokes", h.UsersWithoutJokes).Methods(http.MethodGet)
 	s.HandleFunc("/api/report", h.Report).Methods(http.MethodGet)
-	s.HandleFunc("/api/send", h.SendMessage).Methods(http.MethodGet)
-	s.HandleFunc("/api/recieve", h.RecieveMessage).Methods(http.MethodGet)
-	s.HandleFunc("/api/delete", h.DeleteMessage).Methods(http.MethodGet)
 
 	s.HandleFunc("/api/jokes/search/", h.GetJokeByText).Methods(http.MethodGet)
 
 	return r
 }
-func (h *apiHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
-	messageHandle := r.URL.Query().Get("handle")
-	err := h.AwsServer.DeleteMessage(messageHandle)
-	if err != nil {
-		h.logger.Errorw("UsersWithoutJokes error",
-			"error", err,
-			"text", r.Body)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
 
-	_ = json.NewEncoder(w).Encode("message deleted")
-	if err != nil {
-		h.logger.Errorw("SendMessage - ResponseWrite error",
-			"error", err,
-		)
-		return
-	}
-}
-func (h *apiHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
-	var j model.Joke
-	j.ID = "123456"
-	res, err := h.AwsServer.SendMessage(j)
-	if err != nil {
-		h.logger.Errorw("UsersWithoutJokes error",
-			"error", err,
-			"text", r.Body)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	_ = json.NewEncoder(w).Encode(res)
-	if err != nil {
-		h.logger.Errorw("SendMessage - ResponseWrite error",
-			"error", err,
-		)
-		return
-	}
-}
-func (h *apiHandler) RecieveMessage(w http.ResponseWriter, r *http.Request) {
-
-	res, err := h.AwsServer.RecieveMessage()
-	if err != nil {
-		h.logger.Errorw("UsersWithoutJokes error",
-			"error", err,
-			"text", r.Body)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	_ = json.NewEncoder(w).Encode(res)
-	if err != nil {
-		h.logger.Errorw("RecieveMessage - ResponseWrite error",
-			"error", err,
-		)
-		return
-	}
-}
 func (h *apiHandler) IndexPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "index.html")
 }
@@ -578,15 +521,7 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	err = h.AwsServer.UploadJokesAndMessagesTos3(j)
-	if err != nil {
-		h.logger.Errorw("AddJoke UploadJokesAndMessagesTos3 error",
-			"error", err,
-			"text", r.Body)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	} else {
-		h.logger.Info("Uploading jokes and messages to S3")
-	}
+
 	res, err := h.JokerServer.Add(j)
 	if err != nil {
 		h.logger.Errorw("AddJoke error",
@@ -597,6 +532,17 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+
+	msgId, err := h.AwsServer.SendMessage(j)
+	if err != nil {
+		h.logger.Errorw("AddJoke SendMessage to queue error",
+			"error", err,
+			"text", r.Body)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		w.WriteHeader(http.StatusOK)
+		h.logger.Info("Message was sended to queue.Message id:", msgId)
+	}
 	b, err := json.MarshalIndent(res, "", "  ")
 
 	if err != nil {

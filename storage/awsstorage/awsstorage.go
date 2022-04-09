@@ -1,6 +1,7 @@
 package awsstorage
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"program/model"
@@ -91,11 +92,16 @@ func (a *AWSFs) ReadS3LambdaReport() ([]byte, error) {
 	return result, nil
 
 }
-func (a *AWSFs) SendMsg(id string) (string, error) {
-
+func (a *AWSFs) SendMsg(j model.Joke) (string, error) {
+	str, err := json.Marshal(j)
+	if err != nil {
+		return "", err
+	}
+	// id := "id"
 	res, err := a.sqsSess.SendMessage(&sqs.SendMessageInput{
 		QueueUrl:    &a.urlQueue,
-		MessageBody: aws.String("Message with joke id :" + id),
+		MessageBody: aws.String(string(str)), ////joke
+		// MessageGroupId: &id,
 	})
 
 	if err != nil {
@@ -121,7 +127,7 @@ func (a *AWSFs) GetMsg() (*sqs.ReceiveMessageOutput, error) {
 	msgResult, err := a.sqsSess.ReceiveMessage(&sqs.ReceiveMessageInput{
 		QueueUrl:            &a.urlQueue,
 		MaxNumberOfMessages: aws.Int64(1),
-		WaitTimeSeconds:     aws.Int64(0),
+		WaitTimeSeconds:     aws.Int64(10), /////timeout
 	})
 	// if len(msgResult.Messages) == 0 {
 	// 	return nil, fmt.Errorf("len sqs message is 0: %v", err)

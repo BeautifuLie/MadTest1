@@ -25,11 +25,15 @@ func main() {
 	if err != nil {
 		logger.Errorw("Error during load environments", "error", err)
 	}
+	var jokerServer *joker.JokerServer
+	var userServer *users.UserServer
 
 	mongoStorage, err := mongostorage.NewMongoStorage(os.Getenv("MONGODB_URI"))
 	if err != nil {
 		logger.Errorw("Error during connect...", "error", err)
 	} else {
+		jokerServer = joker.NewJokerServer(mongoStorage)
+		userServer = users.NewUserServer(mongoStorage)
 		logger.Info("Connected to MongoDB database")
 	}
 
@@ -37,6 +41,8 @@ func main() {
 	if err != nil {
 		logger.Errorw("Error during connect SQL database", "error", err)
 	} else {
+		jokerServer = joker.NewJokerServer(sqlStorage)
+		userServer = users.NewUserServer(sqlStorage)
 		logger.Info("Connected to MYSQL database")
 	}
 
@@ -50,8 +56,7 @@ func main() {
 	} else {
 		logger.Info("Connected to AWS services")
 	}
-	jokerServer := joker.NewJokerServer(sqlStorage)
-	userServer := users.NewUserServer(sqlStorage)
+
 	awsServer := awslogic.NewAwsServer(awsstor)
 
 	myRouter := handlers.HandleRequest(handlers.RetHandler(logger, jokerServer, userServer, awsServer))
@@ -84,11 +89,11 @@ func main() {
 		logger.Error(err)
 	}
 
-	err = mongoStorage.CloseClientDB()
+	err = sqlStorage.CloseClientDB()
 	if err != nil {
 		logger.Info(err)
 	}
-	logger.Info("Connection to MongoDB closed...")
+	logger.Info("Connection to MYSQL closed...")
 
 	logger.Info("Shutdown...")
 
