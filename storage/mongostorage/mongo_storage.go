@@ -83,7 +83,7 @@ func (ms *MongoStorage) FindID(id string) (model.Joke, error) {
 
 }
 
-func (ms *MongoStorage) Fun(limit int64) ([]model.Joke, error) {
+func (ms *MongoStorage) Funniest(limit int) ([]model.Joke, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -91,7 +91,7 @@ func (ms *MongoStorage) Fun(limit int64) ([]model.Joke, error) {
 
 	opts := options.Find()
 	opts.SetSort(bson.D{{Key: "score", Value: -1}})
-	opts.SetLimit(limit)
+	opts.SetLimit(int64(limit))
 	result, err := ms.collectionJokes.Find(ctx, bson.D{}, opts)
 	if err != nil {
 
@@ -156,7 +156,7 @@ func (ms *MongoStorage) TextSearch(text string) ([]model.Joke, error) {
 
 }
 
-func (ms *MongoStorage) Save(j model.Joke) error {
+func (ms *MongoStorage) AddJoke(j model.Joke) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_, err := ms.collectionJokes.InsertOne(ctx, j)
@@ -167,19 +167,19 @@ func (ms *MongoStorage) Save(j model.Joke) error {
 	return nil
 }
 
-func (ms *MongoStorage) UpdateByID(text string, id string) (*mongo.UpdateResult, error) {
+func (ms *MongoStorage) UpdateByID(text string, id string) error {
 
 	opts := options.Update().SetUpsert(false)
 	filter := bson.D{{Key: "id", Value: id}}
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: "body", Value: text}}}}
 
-	res, err := ms.collectionJokes.UpdateOne(context.TODO(), filter, update, opts)
+	_, err := ms.collectionJokes.UpdateOne(context.TODO(), filter, update, opts)
 	if err != nil {
 
-		return nil, err
+		return err
 	}
 
-	return res, nil
+	return nil
 }
 
 func (ms *MongoStorage) CloseClientDB() error {
@@ -267,4 +267,13 @@ func (ms *MongoStorage) UpdateTokens(signedToken string, signedRefreshToken stri
 	}
 
 	return nil
+}
+func (ms *MongoStorage) MonthAndCount(year, count int) (int, int, error) {
+	return -1, -1, fmt.Errorf("not implemented")
+}
+func (ms *MongoStorage) JokesByMonth(monthNumber int) (int, error) {
+	return -1, fmt.Errorf("not implemented")
+}
+func (ms *MongoStorage) UsersWithoutJokes() ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
 }

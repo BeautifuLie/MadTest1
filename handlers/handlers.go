@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"strconv"
 	"time"
 
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"program/auth"
+	"program/awslogic"
 	"program/joker"
 	"program/model"
 	"program/storage"
@@ -21,15 +23,23 @@ import (
 )
 
 type apiHandler struct {
+	// BaseJokerServer *joker.BaseJokerServer
+	// ExJokerServer   *joker.ExJokerServer
+	// JokeSearch      *joker.JokeSearchServer
 	JokerServer *joker.JokerServer
 	UserServer  *users.UserServer
+	AwsServer   *awslogic.AwsServer
 	logger      *zap.SugaredLogger
 }
 
-func RetHandler(logger *zap.SugaredLogger, jokerServer *joker.JokerServer, userServer *users.UserServer) *apiHandler {
+func RetHandler(logger *zap.SugaredLogger, jokerServer *joker.JokerServer, userServer *users.UserServer, awsServer *awslogic.AwsServer) *apiHandler {
 	return &apiHandler{
+		// BaseJokerServer: baseJServer,
+		// ExJokerServer:   exJServer,
+		// JokeSearch:      jSearchServer,
 		JokerServer: jokerServer,
 		UserServer:  userServer,
+		AwsServer:   awsServer,
 		logger:      logger,
 	}
 }
@@ -110,6 +120,11 @@ func HandleRequest(h *apiHandler) *mux.Router {
 	s.HandleFunc("/api/jokes", h.AddJoke).Methods(http.MethodPost)
 	s.HandleFunc("/api/jokes/{id}", h.UpdateJoke).Methods(http.MethodPut)
 	s.HandleFunc("/api/jokes/", h.GetJokeByID).Methods(http.MethodGet)
+	s.HandleFunc("/api/jokes/month/", h.JokesByMonth).Methods(http.MethodGet)
+	s.HandleFunc("/api/jokes/count/", h.MonthAndCount).Methods(http.MethodGet)
+	s.HandleFunc("/api/users/withoutjokes", h.UsersWithoutJokes).Methods(http.MethodGet)
+	s.HandleFunc("/api/report", h.Report).Methods(http.MethodGet)
+
 	s.HandleFunc("/api/jokes/search/", h.GetJokeByText).Methods(http.MethodGet)
 
 	return r
@@ -128,6 +143,111 @@ func (h *apiHandler) SignUpPage(w http.ResponseWriter, r *http.Request) {
 }
 func (h *apiHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "login_page.html")
+}
+func (h *apiHandler) Report(w http.ResponseWriter, r *http.Request) {
+	result, err := h.AwsServer.Report()
+	if err != nil {
+		h.logger.Errorw("Report",
+			"error", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = w.Write(result)
+	if err != nil {
+		h.logger.Errorw("Report - ResponseWrite error",
+			"error", err,
+		)
+		return
+	}
+}
+func (h *apiHandler) MonthAndCount(w http.ResponseWriter, r *http.Request) {
+	yearString := r.URL.Query().Get("year")
+	count := r.URL.Query().Get("count")
+	if yearString == "" || count == "" {
+		err := json.NewEncoder(w).Encode("year or count field is empty - type  values")
+		if err != nil {
+			h.logger.Errorw("MonthAndCount",
+				"error", err,
+				"year", yearString,
+				"count", count)
+			return
+		}
+	}
+	yearNumber, err := strconv.Atoi(yearString)
+	if err != nil {
+		h.logger.Errorw("MonthAndCount converting error",
+			"error", err,
+			"year", yearString)
+		return
+	}
+	countNumber, err := strconv.Atoi(count)
+	if err != nil {
+		h.logger.Errorw("MonthAndCount converting error",
+			"error", err,
+			"count", countNumber)
+		return
+	}
+	month, resCount, err := h.JokerServer.MonthAndCount(yearNumber, countNumber)
+	r1 := strconv.Itoa(month)
+	r2 := strconv.Itoa(resCount)
+	str := "month:" + r1 + "  " + "count:" + r2
+	_ = json.NewEncoder(w).Encode(str)
+	if err != nil {
+		h.logger.Errorw("MonthAndCount - ResponseWrite error",
+			"error", err,
+		)
+		return
+	}
+}
+func (h *apiHandler) JokesByMonth(w http.ResponseWriter, r *http.Request) {
+	monthString := r.URL.Query().Get("month")
+	if monthString == "" {
+		err := json.NewEncoder(w).Encode("month field is empty - type month value")
+		if err != nil {
+			h.logger.Errorw("JokesByMonth",
+				"error", err,
+				"month", monthString)
+			return
+		}
+	}
+	monthNumber, err := strconv.Atoi(monthString)
+	if err != nil {
+		h.logger.Errorw("JokesByMonth converting error",
+			"error", err,
+			"month", monthString)
+		return
+	}
+	res, err := h.JokerServer.JokesByMonth(monthNumber)
+	if err != nil {
+		h.logger.Errorw("JokesByMonth error",
+			"error", err,
+			"text", r.Body)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	_ = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		h.logger.Errorw("JokesByMonth - ResponseWrite error",
+			"error", err,
+		)
+		return
+	}
+}
+func (h *apiHandler) UsersWithoutJokes(w http.ResponseWriter, r *http.Request) {
+	res, err := h.UserServer.UsersWithoutJokes()
+	if err != nil {
+		h.logger.Errorw("UsersWithoutJokes error",
+			"error", err,
+			"text", r.Body)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	_ = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		h.logger.Errorw("UsersWithoutJokes - ResponseWrite error",
+			"error", err,
+		)
+		return
+	}
 }
 func (h *apiHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
@@ -229,7 +349,14 @@ func (h *apiHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	r.Header.Set("Authorization", u.Token)
+	_, err = w.Write([]byte("Logged in"))
+	if err != nil {
+		h.logger.Errorw("Login user - ResponseWrite error",
+			"error", err,
+		)
+		return
+	}
 }
 
 func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
@@ -262,7 +389,6 @@ func (h *apiHandler) GetJokeByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
-
 func (h *apiHandler) GetFunniestJokes(w http.ResponseWriter, r *http.Request) {
 
 	limit := r.FormValue("limit")
@@ -318,6 +444,7 @@ func (h *apiHandler) GetRandomJoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 
 	text := r.URL.Query().Get("text")
@@ -326,6 +453,7 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Errorw("GetJokeByText error",
 			"text", text)
+		fmt.Println(err)
 		h.respondError(err, w, r)
 		return
 	}
@@ -337,6 +465,7 @@ func (h *apiHandler) GetJokeByText(w http.ResponseWriter, r *http.Request) {
 		h.logger.Errorw("GetJokeByText encoding error",
 			"error", err,
 			"text", text)
+		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	_, err = w.Write(b)
@@ -392,16 +521,28 @@ func (h *apiHandler) AddJoke(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	res, err1 := h.JokerServer.Add(j)
-	if err1 != nil {
+
+	res, err := h.JokerServer.Add(j)
+	if err != nil {
 		h.logger.Errorw("AddJoke error",
-			"error", err1)
-		h.respondError(err1, w, r)
+			"error", err)
+		h.respondError(err, w, r)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+
+	msgId, err := h.AwsServer.SendMessage(j)
+	if err != nil {
+		h.logger.Errorw("AddJoke SendMessage to queue error",
+			"error", err,
+			"text", r.Body)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		w.WriteHeader(http.StatusOK)
+		h.logger.Info("Message was sended to queue.Message id:", msgId)
+	}
 	b, err := json.MarshalIndent(res, "", "  ")
 
 	if err != nil {

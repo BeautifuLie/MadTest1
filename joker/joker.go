@@ -1,29 +1,27 @@
 package joker
 
 import (
-	"errors"
 	"fmt"
 	"program/model"
 	"program/storage"
+	"program/tools"
 	"strconv"
 )
 
 type JokerServer struct {
-	storage storage.Storage
+	jokerServer storage.Joker
 }
 
-func NewJokerServer(storage storage.Storage) *JokerServer {
+func NewJokerServer(js storage.Joker) *JokerServer {
 	s := &JokerServer{
-
-		storage: storage,
+		jokerServer: js,
 	}
-
 	return s
 }
 
 func (s *JokerServer) ID(id string) (model.Joke, error) {
 
-	result, err := s.storage.FindID(id)
+	result, err := s.jokerServer.FindID(id)
 
 	if err != nil {
 		return model.Joke{}, storage.ErrNoMatches
@@ -32,15 +30,15 @@ func (s *JokerServer) ID(id string) (model.Joke, error) {
 }
 
 func (s *JokerServer) Funniest(m string) ([]model.Joke, error) {
-	var n int64
+	var n int
 	a, _ := strconv.Atoi(m)
 	if a == 0 {
 		n = 10
 	} else {
-		n = int64(a)
+		n = a
 	}
-
-	result, err := s.storage.Fun(n)
+	// limit := strconv.Itoa(n)
+	result, err := s.jokerServer.Funniest(n)
 	if err != nil {
 		return nil, fmt.Errorf("funniest jokes error%v", err)
 	}
@@ -62,7 +60,7 @@ func (s *JokerServer) Random(m string) ([]model.Joke, error) {
 
 	}
 
-	res, err := s.storage.Random(n)
+	res, err := s.jokerServer.Random(n)
 
 	if len(res) == 0 {
 		return nil, storage.ErrNoJokes
@@ -81,24 +79,49 @@ func (s *JokerServer) Random(m string) ([]model.Joke, error) {
 
 func (s *JokerServer) Text(text string) ([]model.Joke, error) {
 
-	result, err := s.storage.TextSearch(text)
+	result, err := s.jokerServer.TextSearch(text)
 	if err != nil {
-		return []model.Joke{}, storage.ErrNoMatches
+		return []model.Joke{}, err
+	}
+
+	return result, nil
+
+}
+func (s *JokerServer) MonthAndCount(year, count int) (int, int, error) {
+
+	month, count, err := s.jokerServer.MonthAndCount(year, count)
+	if err != nil {
+		return month, count, err
+	}
+
+	return month, count, nil
+
+}
+func (s *JokerServer) JokesByMonth(monthNumber int) (int, error) {
+
+	result, err := s.jokerServer.JokesByMonth(monthNumber)
+	if err != nil {
+		return result, err
 	}
 
 	return result, nil
 
 }
 
-func (s *JokerServer) Add(j model.Joke) (model.Joke, error) {
-	_, err := s.storage.FindID(j.ID)
-	if err != nil {
-		err = s.storage.Save(j)
+func (joker *JokerServer) Add(j model.Joke) (model.Joke, error) {
+	_, err := joker.jokerServer.FindID(j.ID)
+	if err == storage.ErrNoJokes {
+		randTime, _ := tools.RandTimeAndUserID()
+		j.Created_at = randTime
+		err = joker.jokerServer.AddJoke(j)
 		if err != nil {
-			return model.Joke{}, errors.New("error writing file")
+			return model.Joke{}, err
 		}
+
+	} else if err != nil {
+		return model.Joke{}, err
 	} else {
-		return model.Joke{}, errors.New(" Joke with that ID already exists")
+		return model.Joke{}, fmt.Errorf(" Joke with that ID already exists")
 	}
 
 	return j, nil
@@ -106,7 +129,7 @@ func (s *JokerServer) Add(j model.Joke) (model.Joke, error) {
 
 func (s *JokerServer) Update(j model.Joke, id string) (model.Joke, error) {
 
-	_, err := s.storage.UpdateByID(j.Body, id)
+	err := s.jokerServer.UpdateByID(j.Body, id)
 	if err != nil {
 		return model.Joke{}, fmt.Errorf("update joke with id %s error:%v", id, err)
 	}
