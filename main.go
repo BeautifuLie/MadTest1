@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
+	"time"
+
 	"program/awslogic"
 	"program/handlers"
 	"program/joker"
@@ -13,13 +16,12 @@ import (
 	"program/storage/mongostorage"
 	"program/storage/sqlstorage"
 	"program/users"
-	"syscall"
-	"time"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	////aaaaa
 	logger := logging.InitZapLog()
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -96,5 +98,4 @@ func main() {
 	logger.Info("Connection to MYSQL closed...")
 
 	logger.Info("Shutdown...")
-
 }
