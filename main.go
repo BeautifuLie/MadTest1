@@ -22,7 +22,11 @@ import (
 
 func main() {
 	/////cccccccccc
+
 	/////ffffffffff
+
+	/////dddddddddd
+
 	logger := logging.InitZapLog()
 	err := godotenv.Load(".env")
 	if err != nil {
