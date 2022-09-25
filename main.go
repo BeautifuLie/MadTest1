@@ -65,11 +65,19 @@ func main() {
 	// 	os.Getenv("AWS_ACCESS_KEY_ID"),
 	// 	os.Getenv("AWS_SECRET_ACCESS_KEY"),
 	// 	"")
+
 	// awsstor, err := awsstorage.NewAwsStorage(
 	// 	os.Getenv("AWS_REGION"),
 	// 	os.Getenv("AWS_ACCESS_KEY_ID"),
 	// 	os.Getenv("AWS_SECRET_ACCESS_KEY"),
 	// 	"")
+
+	// logger := logging.InitZapLog()
+	// err := godotenv.Load(".env")
+	// if err != nil {
+	// 	logger.Errorw("Error during load environments", "error", err)
+	// }
+
 	sqlStorage, err := sqlstorage.NewSqlStorage(os.Getenv("MYSQL_URI"))
 	if err != nil {
 		logger.Errorw("Error during connect SQL database", "error", err)
