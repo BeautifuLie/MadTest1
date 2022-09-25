@@ -45,6 +45,14 @@ func main() {
 	// 	userServer = users.NewUserServer(mongoStorage)
 	// 	logger.Info("Connected to MongoDB database")
 	// }
+	// mongoStorage, err := mongostorage.NewMongoStorage(os.Getenv("MONGODB_URI"))
+	// if err != nil {
+	// 	logger.Errorw("Error during connect...", "error", err)
+	// } else {
+	// 	jokerServer = joker.NewJokerServer(mongoStorage)
+	// 	userServer = users.NewUserServer(mongoStorage)
+	// 	logger.Info("Connected to MongoDB database")
+	// }
 	sqlStorage, err := sqlstorage.NewSqlStorage(os.Getenv("MYSQL_URI"))
 	if err != nil {
 		logger.Errorw("Error during connect SQL database", "error", err)
