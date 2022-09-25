@@ -27,6 +27,7 @@ func main() {
 
 	/////dddddddddd
 
+	////////eeeeeee
 	logger := logging.InitZapLog()
 	err := godotenv.Load(".env")
 	if err != nil {
