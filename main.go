@@ -71,7 +71,14 @@ func main() {
 	// 	os.Getenv("AWS_ACCESS_KEY_ID"),
 	// 	os.Getenv("AWS_SECRET_ACCESS_KEY"),
 	// 	"")
-
+	// sqlStorage, err := sqlstorage.NewSqlStorage(os.Getenv("MYSQL_URI"))
+	// if err != nil {
+	// 	logger.Errorw("Error during connect SQL database", "error", err)
+	// } else {
+	// 	jokerServer = joker.NewJokerServer(sqlStorage)
+	// 	userServer = users.NewUserServer(sqlStorage)
+	// 	logger.Info("Connected to MYSQL database")
+	// }
 	// logger := logging.InitZapLog()
 	// err := godotenv.Load(".env")
 	// if err != nil {
